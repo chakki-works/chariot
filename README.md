@@ -19,6 +19,12 @@ Project root
        └── raw          <- The original, immutable data dump.
 ```
 
+## Install
+
+```
+pip install chariot
+```
+
 ## Data download
 
 Prepare the `requirements_d.txt` to manage the data dependency.
