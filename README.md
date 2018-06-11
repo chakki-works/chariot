@@ -48,18 +48,14 @@ There is 2 type of preprocessors are prepared in `chariot`.
 You can build the `Parser` from one `Tokenizer` and arbitrary number of TextPreprocessor and TokenPreprocessor.
 
 ```py
-from chariot.parser import Parser, Tokenizer
+from chariot.parser import Parser
 from chariot.preprocessor.text import UnicodeNormalizer
 from chariot.preprocessor.token import StopwardFilter
 
 
-parser = Parser(steps=[
-                UnicodeNormalizer(),
-                Tokenizer(lang="en"),
-                StopwardFilter()])
-
+parser = Parser("en", text_preprocessors=[UnicodeNormalizer()],
+                token_preprocessors=[StopwardFilter()])
 tokens = parser.parse("I like an aplle.")
-
 ```
 
 After you tokenize the texts, then make vocabulary and indexing these.
