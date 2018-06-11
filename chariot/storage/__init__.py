@@ -1,6 +1,5 @@
 import os
 import re
-from datetime import datetime
 from zipfile import ZipFile
 
 
@@ -12,13 +11,12 @@ class Storage():
         manner.
         https://drivendata.github.io/cookiecutter-data-science/
 
-        ├── data
-        │   ├── external     <- Data from third party sources.
-        │   ├── interim      <- Intermediate data that has been transformed.
-        │   ├── processed    <- The final, canonical data sets for modeling.
-        │   ├── raw          <- The original, immutable data dump.
-        │   └── log          <- [ADD] Training results are stored.
-        ├── models           <- Trained and serialized models
+        ROOT
+         └── data
+              ├── external     <- Data from third party sources.
+              ├── interim      <- Intermediate data that has been transformed.
+              ├── processed    <- The final, canonical data sets for modeling.
+              └── raw          <- The original, immutable data dump.
 
         Args:
             root: path to root directory (parent directory of data, models).
@@ -27,25 +25,6 @@ class Storage():
 
     def data(self, target=""):
         return os.path.join(self.root, "data/{}".format(target))
-
-    def model(self, target_or_instance, extention=".h5"):
-        _target = target_or_instance
-        if not isinstance(target_or_instance, str):
-            name = self._to_snake(target_or_instance.__class__.__name__)
-            _target = name + extention
-        return os.path.join(self.root, "models/{}".format(_target))
-
-    def make_logdir(self, instance):
-        name = self._to_snake(instance.__class__.__name__)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-        _dir = os.path.join(self.root, "data/log")
-        for n in (name, timestamp):
-            _dir = os.path.join(_dir, n)
-            if not os.path.exists(_dir):
-                os.mkdir(_dir)
-
-        return _dir, name
 
     def _to_snake(self, name):
         _name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)

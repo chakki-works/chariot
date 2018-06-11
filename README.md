@@ -63,8 +63,7 @@ After you tokenize the texts, then make vocabulary and indexing these.
 from chariot.storage import Storage
 
 
-# After tokenize the text
-corpus = parser.make_corpus("mycorpus", tokens,
+corpus = parser.make_corpus("mycorpus", array_of_text,
                             vocab_size=50000, unknown="__UNK__")
 
 storage = Storage(root="your/data/dir")

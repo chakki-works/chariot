@@ -1,26 +1,30 @@
 import csv
 from tqdm import tqdm
-from sumbase.storage.data_file import DataFile
+from chariot.storage.data_file import DataFile
 
 
 class CsvFile(DataFile):
 
-    def __init__(self, path, delimiter=","):
-        super().__init__(path)
+    def __init__(self, path, encoding="utf-8", delimiter=",",
+                 has_header=False):
+        super().__init__(path, encoding)
         self.delimiter = delimiter
+        self.has_header = has_header
         self.header = []
 
-    @classmethod
-    def create(cls, target, name, attribute, kind):
-        return super().create(target, name, attribute, kind, ".csv")
+    def fetch(self, progress=False):
+        done_header = not self.has_header
+        total_count = 0
+        if progress:
+            total_count = self.get_line_count()
 
-    def fetch(self, encoding="utf-8", has_header=False):
-        total_count = self.get_line_count()
-        done_header = not has_header
-        with open(self.path, encoding=encoding) as f:
+        with open(self.path, encoding=self.encoding) as f:
             reader = csv.reader(f, delimiter=self.delimiter)
-            for row in tqdm(reader, total=total_count):
-                if has_header and not done_header:
+            if progress:
+                reader = tqdm(reader, total=total_count)
+
+            for row in reader:
+                if self.has_header and not done_header:
                     if len(self.header) == 0:
                         self.header = row
                     done_header = True
@@ -34,7 +38,7 @@ class CsvFile(DataFile):
                         yield row
 
     def write(self, elements_iter):
-        with open(self.path, mode="wb", encoding="utf-8") as f:
+        with open(self.path, mode="wb", encoding=self.encoding) as f:
             writer = csv.writer(f, delimiter=self.delimiter)
             for elements in elements_iter:
                 writer.writerow(elements)

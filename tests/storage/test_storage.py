@@ -1,6 +1,6 @@
 import os
 import unittest
-from sumbase.storage import Storage
+from chariot.storage import Storage
 
 
 def resolve(path):
