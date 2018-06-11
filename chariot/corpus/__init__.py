@@ -7,7 +7,7 @@ import numpy as np
 class Corpus():
 
     def __init__(self, data_file, vocab_file=None,
-                 label_column=0, feature_columns=(),
+                 label_column=0, column_setting=(),
                  padding="__PAD__", unknown="__UNK__",
                  begin_of_seq="__BOS__", end_of_seq="__EOS__"):
         self.data_file = data_file
@@ -15,7 +15,7 @@ class Corpus():
         if self.vocab_file is None:
             self.vocab_file = self.data_file.convert(ext_to=".vocab")
         self.label_column = label_column
-        self.feature_columns = feature_columns
+        self.column_setting = column_setting
         self._padding = padding
         self._unknown = unknown
         self._begin_of_seq = begin_of_seq
@@ -24,44 +24,39 @@ class Corpus():
         self._cache = {}
 
     @classmethod
-    def build(cls, data_file, parser, target_columns=(),
-              label_column=0, min_df=1, progress=True,
+    def build(cls, data_file, parser,  label_column=0,
+              column_setting=(), min_df=1, progress=True,
               padding="__PAD__", unknown="__UNK__",
               begin_of_seq="__BOS__", end_of_seq="__EOS__"):
 
         vocab = Counter()
-        tokenized = []
+        dataset = []
 
         def parse(text):
             return parser.parse(text, return_surface=True)
 
+        _column_setting = column_setting
         for line in data_file.fetch(progress):
             if isinstance(line, str):
-                features = [parse(line)]
-            elif isinstance(line, (tuple, list)):
-                if len(target_columns) > 0:
-                    keys = target_columns
-                else:
-                    keys = list(range(len(line)))
+                line = [line]
 
-                features = [parse(ln) for i, ln in enumerate(line)
-                            if i in keys]
-            elif isinstance(line, dict):
-                if len(target_columns) > 0:
-                    keys = target_columns
-                else:
-                    keys = list(line.keys())
+            if len(_column_setting) == 0:
+                if isinstance(line, (tuple, list)):
+                    _column_setting = {i: True for i in range(len(line))}
+                elif isinstance(line, dict):
+                    _column_setting = {k: True for k in line}
 
-                features = [parse(ln) for i, ln in enumerate(line)
-                            if i in keys]
+            features = {k: parse(line[k]) if _column_setting[k] else line[k]
+                        for k in _column_setting}
 
-            for tokens in features:
-                for t in tokens:
-                    vocab[t] += 1
-            tokenized.append(features)
+            for k in features:
+                if _column_setting[k]:
+                    for t in features[k]:
+                        vocab[t] += 1
+            dataset.append(features)
 
         min_count = (min_df if isinstance(min_df, numbers.Integral)
-                     else min_df * len(tokenized))
+                     else min_df * len(dataset))
 
         selected = []
         for term, count in vocab.most_common():
@@ -94,11 +89,15 @@ class Corpus():
                 return selected.index(unknown)
 
         with open(indexed_file.path, mode="w", encoding=encoding) as f:
-            for features in tokenized:
+            for features in dataset:
                 elements = []
-                for tokens in features:
-                    string = " ".join([str(get_index(t)) for t in tokens])
-                    elements.append(string)
+                for k in _column_setting:
+                    if _column_setting[k]:
+                        tokens = features[k]
+                        string = " ".join([str(get_index(t)) for t in tokens])
+                        elements.append(string)
+                    else:
+                        elements.append(features[k])
 
                 line = ""
                 if len(elements) > 1:
@@ -108,6 +107,7 @@ class Corpus():
                 f.write(line + "\n")
 
         return cls(indexed_file, label_column=label_column,
+                   column_setting=_column_setting,
                    padding=padding, unknown=unknown,
                    begin_of_seq=begin_of_seq, end_of_seq=end_of_seq)
 
@@ -193,64 +193,42 @@ class Corpus():
 
     def fetch(self, progress=False, word_sequence=False):
         wq = word_sequence
+        _column_setting = self.column_setting
+
         for line in self.data_file.fetch(progress):
-            label = []
-            features = []
-            if isinstance(line, str):
-                features = self.text_to_indices(line, wq)
-            elif isinstance(line, (list, tuple)):
-                if not isinstance(self.label_column, int):
-                    raise Exception("You have to specify columns by integer.")
-                label = self.text_to_indices(line[self.label_column], wq)
-                if len(self.feature_columns) == 0:
-                    features = [e for i, e in enumerate(line)
-                                if i != self.label_column]
+            if len(_column_setting) == 0:
+                if isinstance(line, str):
+                    _column_setting[0] = True
+                elif isinstance(line, (list, tuple)):
+                    _column_setting = {i: True for i in range(len(line))}
+                elif isinstance(line, dict):
+                    _column_setting = {k: True for k in list(line.keys())}
+                self.column_setting = _column_setting
+
+            data = {}
+            for k in _column_setting:
+                if _column_setting[k]:
+                    data[k] = self.text_to_indices(line[k], wq)
                 else:
-                    features = [e for i, e in line
-                                if i in self.feature_columns]
+                    data[k] = line[k]
 
-                if len(features) == 1:
-                    features = self.text_to_indices(features[0], wq)
-                else:
-                    features = [self.text_to_indices(f, wq) for f in features]
-
-            elif isinstance(line, dict):
-                if not isinstance(self.label_column, str):
-                    raise Exception("You have to specify columns by str.")
-
-                label = self.text_to_indices(line[self.label_column], wq)
-                if len(self.feature_columns) == 0:
-                    features = [line[k] for k in line
-                                if k != self.label_column]
-                else:
-                    features = [line[k] for k in line
-                                if k in self.feature_columns]
-
-                if len(features) == 1:
-                    features = self.text_to_indices(features[0], wq)
-                else:
-                    features = [self.text_to_indices(f, wq) for f in features]
-
+            label = data[self.label_column]
+            features = {k: data[k] for k in data if k != self.label_column}
             yield features, label
 
     def to_dataset(self, progress=False, word_sequence=False,
                    label_format_func=None, feature_format_func=None):
         labels = []
-        features = []
-        multiple_feature = False
+        features = {}
 
         for f, lb in self.fetch(progress=progress,
                                 word_sequence=word_sequence):
-            if all(isinstance(_f, list) for _f in f):
-                if len(features) == 0:
-                    multiple_feature = True
-                    for i in range(len(f)):
-                        features.append([])
-                for i, _f in enumerate(f):
-                    features[i].append(_f)
-            else:
-                features.append(f)
+
             labels.append(lb)
+            for k in f:
+                if k not in features:
+                    features[k] = []
+                features[k].append(f[k])
 
         if label_format_func:
             labels = label_format_func(labels)
@@ -258,17 +236,25 @@ class Corpus():
             labels = np.array(labels)
 
         if feature_format_func:
-            if multiple_feature:
-                if not isinstance(feature_format_func, (list, tuple)):
-                    raise Exception("Feature format func is insufficient.")
-                elif len(features) != len(feature_format_func):
-                    raise Exception("Feature format func is insufficient.")
-
-                for i in range(len(features)):
-                    features[i] = feature_format_func[i](features[i])
-
+            keys = list(features.keys())
+            _func_dict = {}
+            if isinstance(feature_format_func, (list, tuple)):
+                for k, f in zip(keys, feature_format_func):
+                    _func_dict[k] = f
+            elif isinstance(feature_format_func, dict):
+                _func_dict = feature_format_func
             else:
-                features = feature_format_func(features)
+                for k in keys:
+                    _func_dict[k] = feature_format_func
+
+            for k in keys:
+                if self.column_setting[k]:
+                    features[k] = _func_dict[k](features[k])
+
+        if len(features) == 1:
+            features = list(features.values())[0]
+        else:
+            features = [v for k, v in sorted(features.items())]
 
         return features, labels
 

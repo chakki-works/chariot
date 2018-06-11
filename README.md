@@ -61,13 +61,21 @@ After you tokenize the texts, then make vocabulary and indexing these.
 
 ```py
 from chariot.storage import Storage
+from chariot.storage.csv_file import CsvFile
+from chariot.corpus import Corpus
 
-
-corpus = parser.make_corpus("mycorpus", array_of_text,
-                            vocab_size=50000, unknown="__UNK__")
 
 storage = Storage(root="your/data/dir")
-corpus.save(storage)
+source_file = CsvFile(storage.data("raw/corpus.csv"), delimiter="\t")
+
+corpus = Corpus.build(source_file, parser)
+
+
+y_format_func = corpus.format_func(padding=5, to_categorical=True)
+x_format_func = corpus.format_func(padding=10)
+
+X, y = corpus.to_dataset(label_format_func=y_format_func,
+                         feature_format_func=x_format_func)
 ```
 
 ## Prepare the pre-trained word vectors

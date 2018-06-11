@@ -64,7 +64,9 @@ class TestCorpus(unittest.TestCase):
         storage = Storage(path)
         csv = CsvFile(storage.data("raw/corpus_multi.csv"), delimiter="\t")
         parser = Parser("en")
-        corpus = Corpus.build(csv, parser, target_columns=(1, 2))
+        corpus = Corpus.build(csv, parser, column_setting={
+                    0: False, 1: True, 2: True
+                })
 
 
 if __name__ == "__main__":
