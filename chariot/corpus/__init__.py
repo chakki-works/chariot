@@ -191,31 +191,6 @@ class Corpus():
             text = [vocab[i] for i in indices if i != pad]
         return join_str.join(text)
 
-    def fetch(self, progress=False, word_sequence=False):
-        wq = word_sequence
-        _column_setting = self.column_setting
-
-        for line in self.data_file.fetch(progress):
-            if len(_column_setting) == 0:
-                if isinstance(line, str):
-                    _column_setting[0] = True
-                elif isinstance(line, (list, tuple)):
-                    _column_setting = {i: True for i in range(len(line))}
-                elif isinstance(line, dict):
-                    _column_setting = {k: True for k in list(line.keys())}
-                self.column_setting = _column_setting
-
-            data = {}
-            for k in _column_setting:
-                if _column_setting[k]:
-                    data[k] = self.text_to_indices(line[k], wq)
-                else:
-                    data[k] = line[k]
-
-            label = data[self.label_column]
-            features = {k: data[k] for k in data if k != self.label_column}
-            yield features, label
-
     def to_dataset(self, progress=False, word_sequence=False,
                    label_format_func=None, feature_format_func=None):
         labels = []
