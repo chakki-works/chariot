@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name="chariot",
-    version="0.0.1",
+    version="0.1.0",
     description="Speedy data processing tool for NLP tasks",
     keywords=["machine learning", "nlp", "natural language processing"],
     author="icoxfog417",
@@ -11,10 +11,11 @@ setup(
     license="Apache License 2.0",
     packages=[
         "chariot",
-        "chariot.corpus",
-        "chariot.preprocessor",
         "chariot.storage",
-        "chariot.tokenizer",
+        "chariot.transformer",
+        "chariot.transformer.text",
+        "chariot.transformer.token",
+        "chariot.transformer.tokenizer"
         ],
     url="https://github.com/chakki-works/chariot",
     install_requires=[
