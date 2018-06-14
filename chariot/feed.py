@@ -2,7 +2,7 @@ import numpy as np
 from itertools import compress
 
 
-class Batch():
+class Feed():
 
     def __init__(self, dataset, fields, field_adjuster=()):
         self.dataset = dataset
@@ -20,7 +20,7 @@ class Batch():
             batch_data.append(BatchData(self.dataset[f], adjuster))
         return batch_data
 
-    def iter(self, batch_size, epoch=-1):
+    def get_generator(self, batch_size, epoch=-1):
         sample_size = 0
         for f in self.fields:
             if sample_size == 0:
@@ -31,18 +31,20 @@ class Batch():
         steps_per_epoch = sample_size // batch_size
 
         def generator():
-            candidates = np.zeros(sample_size)
-            selected = np.random.randint(batch_size)
-            candidates[selected] = 1
-            batch = []
+            indices = np.arange(sample_size)
             count = 0
             _epoch = 0
             while True:
                 if count > 0 and count % steps_per_epoch == 0:
                     _epoch += 1
                     count = 0
-                    if epoch > 0 and _epoch > epoch:
+                    if epoch > 0 and _epoch >= epoch:
                         break
+                batch = []
+                candidates = np.zeros(sample_size)
+                selected = np.random.choice(indices, size=batch_size,
+                                            replace=False)
+                candidates[selected] = 1
                 for f in self.fields:
                     _selected = compress(self.dataset[f], candidates)
                     adjuster = None
@@ -54,6 +56,11 @@ class Batch():
                 yield batch
 
         return steps_per_epoch, generator
+
+    def batch_iter(self, batch_size, epoch=-1):
+        steps_per_epoch, generator = self.get_generator(batch_size, epoch)
+        for b in generator():
+            yield b
 
 
 class BatchData():
@@ -74,3 +81,6 @@ class BatchData():
             return self.adjuster.to_categorical(adjusted)
         else:
             return adjusted
+
+    def to_int_array(self):
+        return np.array([int(i) for i in self.array])

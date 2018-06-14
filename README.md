@@ -71,8 +71,7 @@ preprocessor = Preprocessor(
                   tokenizer=ct.Tokenizer("en"),
                   text_transformers=[ct.text.UnicodeNormalizer()],
                   token_transformers=[ct.token.StopwordFilter("en")],
-                  indexer=ct.Indexer()
-
+                  indexer=ct.Indexer())
 
 preprocessor.fit(your_dataset)
 joblib.dump(preprocessor, "preprocessor.pkl")  # Save
@@ -125,6 +124,25 @@ indexed = TransformedDataset.load(original_csv_file, "token_to_indexed")
 words = indexed.field_transformers["review"].inverse_transform(indexed.get("review"))
 ```
 
+## Feed the data to your model
+
+`chariot` supports the feature for feeding the data to the model.
+
+```py
+sentiment_dataset = Dataset(csv_file, ["label", "review"])
+preprocessor.fit(sentiment_dataset.get("review"))
+
+feed = sentiment_dataset.to_feed(field_transformers={
+    "label": None,
+    "review": preprocessor
+})
+
+for labels, reviews in feed.batch_iter(batch_size=32, epoch=10):
+    y = labels.to_int_array()
+    X = reviews.adjust(padding=5, to_categorical=True)
+
+    your_model.train(X, y)
+```
 
 ## Prepare the pre-trained word vectors
 

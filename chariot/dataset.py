@@ -3,7 +3,7 @@ from pathlib import Path
 import shutil
 import json
 from sklearn.externals import joblib
-from chariot.batch import Batch
+from chariot.feed import Feed
 from chariot.transformer.adjuster import Adjuster
 
 
@@ -58,38 +58,40 @@ class Dataset():
 
     def save_transformed(self, transform_name, field_transformers):
         target_fields = [c for c in self.fields if c in field_transformers]
-        transed_fields = []
         dataset = self.get(target_fields)
 
         for f in field_transformers:
             if field_transformers[f]:
                 dataset[f] = field_transformers[f].transform(dataset[f])
-                transed_fields.append(f)
 
         transformed = TransformedDataset.create(transform_name, dataset,
                                                 field_transformers,
                                                 self.data_file)
         return transformed
 
-    def batch(self, fields=(), field_transformers=(), apply_transformer=True):
-        _fields = fields if len(fields) > 0 else self.fields
-        dataset = self.get(*_fields)
-        print(dataset)
+    def to_feed(self, field_transformers=(),
+                apply_transformer=True):
+        target_fields = [c for c in self.fields if c in field_transformers]
+        dataset = self.get(target_fields)
+
         field_adjuster = {}
         for f in dataset:
             aj = None
             if f in field_transformers:
+                if field_transformers[f] is None:
+                    continue
+                t = field_transformers[f]
                 if apply_transformer:
-                    dataset[f] = field_transformers[f].transform(dataset[f])
-                if field_transformers[f].indexer is not None:
-                    indexer = field_transformers[f].indexer
+                    dataset[f] = t.transform(dataset[f])
+                if t.indexer is not None:
+                    indexer = t.indexer
                     aj = Adjuster(len(indexer.vocab), indexer.pad,
                                   indexer.unk, indexer.bos, indexer.eos)
 
             if aj is not None:
                 field_adjuster[f] = aj
 
-        return Batch(dataset, _fields, field_adjuster)
+        return Feed(dataset, target_fields, field_adjuster)
 
 
 class TransformedDataset(Dataset):
@@ -142,7 +144,6 @@ class TransformedDataset(Dataset):
                 f.write(line + "\n")
 
         # Make metadata
-        print(original_path)
         meta_data = {
             "original": os.path.abspath(original_path),
             "fields": fields
@@ -172,7 +173,6 @@ class TransformedDataset(Dataset):
 
         field_transformers = {}
         for f in fields:
-            print(f)
             if root.joinpath(f + ".pkl").exists():
                 t = joblib.load(root.joinpath(f + ".pkl"))
                 field_transformers[f] = t
