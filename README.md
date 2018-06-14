@@ -27,6 +27,27 @@ pip install chariot
 
 ## Data download
 
+You can download various dataset by using [chazutsu](https://github.com/chakki-works/chazutsu).
+
+```py
+import chazutsu
+r = chazutsu.datasets.IMDB().download()
+r.train_data().head(5)
+```
+
+Then
+
+```
+   polarity  rating                                             review
+0         0       3  You'd think the first landing on the Moon woul...
+1         1       9  I took a flyer in renting this movie but I got...
+2         1      10  Sometimes I just want to laugh. Don't you? No ...
+3         0       2  I knew it wasn't gunna work out between me and...
+4         0       2  Sometimes I rest my head and think about the r...
+```
+
+(Following feature is under development)
+
 Prepare the `requirements_d.txt` to manage the data dependency.
 
 ```
@@ -34,68 +55,80 @@ movie_review_data:polarity
 your_original_data:v1 http://data/file/url/data.csv
 ```
 
-## Tokenize data & make vocabulary
+## Preprocess the NLP data
 
-There is 2 type of preprocessors are prepared in `chariot`.
+All preprocessors are defined at `chariot.transformer`.  
+Transformers are implemented following to the scikit-learn transformer manner.  Thanks to that, you can chain & save preprocessors easily.
+
+
+```py
+from sklearn.externals import joblib
+import chariot.transformer as ct
+from chariot.preprocessor import Preprocessor
+
+
+preprocessor = Preprocessor(
+                  tokenizer=ct.Tokenizer("en"),
+                  text_transformers=[ct.text.UnicodeNormalizer()],
+                  token_transformers=[ct.token.StopwordFilter("en")],
+                  indexer=ct.Indexer()
+
+
+preprocessor.fit(your_dataset)
+joblib.dump(preprocessor, "preprocessor.pkl")  # Save
+
+preprocessor = joblib.load("preprocessor.pkl")  # Load
+```
+
+It means you don't need code of preprocessors in your inference (predict) server.
+
+There is 5 type of transformers for preprocessors.
 
 * TextPreprocessor
+  * Preprocess the text before tokenization.
   * `TextNormalizer`: Normalize text (replace some character etc).
-  * `TextFilter`: Filter the text (it means skip the line of text).
-* TokenPreprocessor: Normalize of filter tokens.
+  * `TextFilter`: Filter the text (delete some span in text stc).
+* Tokenizer
+  * Tokenize the texts.
+  * It powered by [spaCy](https://spacy.io/) and you can choose [MeCab](https://github.com/taku910/mecab) or [Janome](https://github.com/mocobeta/janome) for Japanese.
+* TokenPreprocessor
+  * Normalize/Filter the tokens after tokenization.
   * `TokenNormalizer`: Normalize tokens (to lower, to original form etc).
   * `TokenFilter`: Filter tokens (extract only noun etc).
+* Indexer
+  * Make vocabulary and convert tokens to indices.
+* Adjuster
+  * After the data is converted to indices (=int array), padding sequence etc.
 
-You can build the `Parser` from one `Tokenizer` and arbitrary number of TextPreprocessor and TokenPreprocessor.
-
-```py
-from chariot.parser import Parser
-from chariot.preprocessor.text import UnicodeNormalizer
-from chariot.preprocessor.token import StopwardFilter
-
-
-parser = Parser("en", text_preprocessors=[UnicodeNormalizer()],
-                token_preprocessors=[StopwardFilter()])
-tokens = parser.parse("I like an aplle.")
-```
-
-After you tokenize the texts, then make vocabulary and indexing these.
-
+You can save the preprocessed result to disk.
 
 ```py
-from chariot.storage import Storage
-from chariot.storage.csv_file import CsvFile
-from chariot.corpus import Corpus
+from chariot.dataset import Dataset
 
 
-storage = Storage(root="your/data/dir")
-source_file = CsvFile(storage.data("raw/corpus.csv"), delimiter="\t")
+dataset = Dataset(csv_file, ["label", "review", "comment"])
 
-corpus = Corpus.build(source_file, parser)
+# Save indexed
+indexed = dataset.save_transformed("token_to_indexed", {
+            "label": None,
+            "review": preprocessor
+          })
 
-
-y_format_func = corpus.format_func(padding=5, to_categorical=True)
-x_format_func = corpus.format_func(padding=10)
-
-X, y = corpus.to_dataset(label_format_func=y_format_func,
-                         feature_format_func=x_format_func)
 ```
+
+The transformers are also saved with transformed data. For that reason you can inverse-transform the data after loading the dataset. 
+
+```py
+# Load indexed data
+indexed = TransformedDataset.load(original_csv_file, "token_to_indexed")
+
+words = indexed.field_transformers["review"].inverse_transform(indexed.get("review"))
+```
+
 
 ## Prepare the pre-trained word vectors
 
-```py
-from chariot.storage import Storage
-from chariot.corpus import Corpus
-from chariot.wordvector import WordVectors
+You can download the pre-trained word vectors by [chakin](https://github.com/chakki-works/chakin).  
+And use these easily.
 
-
-storage = Storage(root="your/data/dir")
-corpus = Corpus.load(storage, "mycorpus")
-
-
-# Download the word vectors (if it does not exist yet).
-fast_text = WordVectors.load(storage, "fastText(en)")
-
-
-embeddings = corpus.vocab_to_vector(fast_text)
-```
-
+(Under development)

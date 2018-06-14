@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 import unittest
 from sklearn.externals import joblib
@@ -8,11 +9,12 @@ from chariot.storage.csv_file import CsvFile
 from chariot.dataset import Dataset
 import chariot.transformer as ct
 from chariot.preprocessor import Preprocessor
+from chariot.dataset import TransformedDataset
 
 
 class TestPreprocessors(unittest.TestCase):
 
-    def xtest_preprocess(self):
+    def test_preprocess(self):
         path = os.path.join(os.path.dirname(__file__), "./")
         storage = Storage(path)
         csv = CsvFile(storage.data("raw/corpus.csv"), delimiter="\t")
@@ -50,14 +52,16 @@ class TestPreprocessors(unittest.TestCase):
                             indexer=ct.Indexer(min_df=0))
 
         dataset = Dataset(csv, ["label", "review", "comment"])
-        preprocessor.fit(dataset.get(["review", "comment"]))
+        preprocessor.fit(dataset.get("review", "comment"))
 
-        indexed = dataset.save_indexed({
+        indexed = dataset.save_transformed("indexed", {
             "label": None,
             "review": preprocessor
         })
+        indexed = TransformedDataset.load(csv, "indexed")
         print(indexed.get())
-        print(preprocessor.inverse_transform(indexed.get("review")))
+        print(indexed.field_transformers["review"].inverse_transform(indexed.get("review")))
+        shutil.rmtree(os.path.dirname(indexed.data_file.path))
 
 
 if __name__ == "__main__":

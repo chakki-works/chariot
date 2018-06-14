@@ -1,45 +1,51 @@
-from itertools import chain
+import os
+from pathlib import Path
+import shutil
+import json
+from sklearn.externals import joblib
+from chariot.batch import Batch
+from chariot.transformer.adjuster import Adjuster
 
 
 class Dataset():
 
-    def __init__(self, data_file, columns):
+    def __init__(self, data_file, fields):
         self.data_file = data_file
-        self.columns = columns
+        self.fields = fields
 
-    def __call__(self, *columns):
-        for result in self.fetch(target_columns=columns):
+    def __call__(self, *fields):
+        for result in self.fetch(target_fields=fields):
             yield result
 
-    def get(self, *columns):
+    def get(self, *fields):
         dataset = {}
 
-        if len(columns) == 0:
-            _columns = self.columns
-        elif isinstance(columns[0], (list, tuple)):
-            _columns = columns[0]
+        if len(fields) == 0:
+            _fields = self.fields
+        elif isinstance(fields[0], (list, tuple)):
+            _fields = fields[0]
         else:
-            _columns = [columns[0]]
+            _fields = fields
 
-        for c in _columns:
+        for c in _fields:
             dataset[c] = []
 
-        for result in self.fetch(target_columns=_columns):
-            for i, c in enumerate(_columns):
+        for result in self.fetch(target_fields=_fields):
+            for i, c in enumerate(_fields):
                 dataset[c].append(result[i])
 
         return dataset
 
-    def fetch(self, target_columns=(), progress=False):
-        _target = target_columns
+    def fetch(self, target_fields=(), progress=False):
+        _target = target_fields
         if len(_target) == 0:
-            _target = self.columns  # Select all columns
+            _target = self.fields  # Select all fields
 
         first = True
         for line in self.data_file.fetch(progress):
             if first and isinstance(line, (list, tuple)):
-                # change column name to index
-                _target = [i for i, c in enumerate(self.columns)
+                # change field name to index
+                _target = [i for i, c in enumerate(self.fields)
                            if c in _target]
 
             if isinstance(line, (dict, list, tuple)):
@@ -50,22 +56,76 @@ class Dataset():
             first = False
             yield result
 
-    def save_indexed(self, column_processors):
-        target_columns = [c for c in self.columns if c in column_processors]
-        indexed_columns = []
-        dataset = self.get(target_columns)
+    def save_transformed(self, transform_name, field_transformers):
+        target_fields = [c for c in self.fields if c in field_transformers]
+        transed_fields = []
+        dataset = self.get(target_fields)
 
-        for c in column_processors:
-            if column_processors[c]:
-                dataset[c] = column_processors[c].transform(dataset[c])
-                indexed_columns.append(c)
+        for f in field_transformers:
+            if field_transformers[f]:
+                dataset[f] = field_transformers[f].transform(dataset[f])
+                transed_fields.append(f)
 
-        indexed = self.data_file.convert(data_dir_to="processed",
-                                         add_attribute="indexed")
+        transformed = TransformedDataset.create(transform_name, dataset,
+                                                field_transformers,
+                                                self.data_file)
+        return transformed
 
-        columns = [dataset[c] for c in target_columns]
-        with open(indexed.path, mode="w", encoding=indexed.encoding) as f:
-            for elements in zip(*columns):
+    def batch(self, fields=(), field_transformers=(), apply_transformer=True):
+        _fields = fields if len(fields) > 0 else self.fields
+        dataset = self.get(*_fields)
+        print(dataset)
+        field_adjuster = {}
+        for f in dataset:
+            aj = None
+            if f in field_transformers:
+                if apply_transformer:
+                    dataset[f] = field_transformers[f].transform(dataset[f])
+                if field_transformers[f].indexer is not None:
+                    indexer = field_transformers[f].indexer
+                    aj = Adjuster(len(indexer.vocab), indexer.pad,
+                                  indexer.unk, indexer.bos, indexer.eos)
+
+            if aj is not None:
+                field_adjuster[f] = aj
+
+        return Batch(dataset, _fields, field_adjuster)
+
+
+class TransformedDataset(Dataset):
+
+    def __init__(self, data_file, original_path, field_transformers):
+        fields = list(field_transformers.keys())
+        super().__init__(data_file, fields)
+        self.original_path = original_path
+        self.field_transformers = field_transformers
+
+    @classmethod
+    def create(cls, transform_name, data, field_transformers, source_file):
+        original_path = source_file.path
+        transed = source_file.convert(data_dir_to="processed",
+                                      add_attribute=transform_name)
+        # Make transformed dir
+        root = os.path.join(os.path.dirname(transed.path), transed.base_name)
+        root = Path(root)
+
+        if root.exists():
+            shutil.rmtree(root)
+        root.mkdir()
+
+        # Save transformers
+        fields = []
+        for f in field_transformers:
+            t = field_transformers[f]
+            if t is not None:
+                joblib.dump(t, root.joinpath("{}.pkl".format(f)))
+            fields.append(f)
+
+        # Save Data
+        transed = transed.convert(data_dir_to="processed/" + root.name)
+        field_data = [data[c] for c in field_transformers]
+        with open(transed.path, mode="w", encoding=transed.encoding) as f:
+            for elements in zip(*field_data):
                 strs = []
                 for e in elements:
                     if isinstance(e, (list, tuple)):
@@ -75,31 +135,62 @@ class Dataset():
 
                 line = ""
                 if len(strs) > 1:
-                    line = indexed.delimiter.join(strs)
+                    line = transed.delimiter.join(strs)
                 else:
                     line = strs[0]
 
                 f.write(line + "\n")
 
-        indexed_d = IndexedDataset(indexed, target_columns, indexed_columns)
-        return indexed_d
+        # Make metadata
+        print(original_path)
+        meta_data = {
+            "original": os.path.abspath(original_path),
+            "fields": fields
+        }
 
+        with root.joinpath("meta.json").open(
+                mode="w", encoding="utf-8") as f:
+                json.dump(meta_data, f)
 
-class IndexedDataset(Dataset):
+        instance = cls(transed, original_path, field_transformers)
+        return instance
 
-    def __init__(self, data_file, columns, indexed_columns):
-        super().__init__(data_file, columns)
-        self.indexed_columns = indexed_columns
+    @classmethod
+    def load(cls, source_file, transform_name):
+        transed = source_file.convert(data_dir_to="processed",
+                                      add_attribute=transform_name)
+        root = os.path.join(os.path.dirname(transed.path),
+                            transed.base_name)
+        root = Path(root)
+        transed_file = transed.convert(data_dir_to="processed/" + root.name)
 
-    def fetch(self, target_columns=(), progress=False):
-        _target = target_columns
+        with root.joinpath("meta.json").open(encoding="utf-8") as f:
+            meta = json.load(f)
+
+        original_path = meta["original"]
+        fields = meta["fields"]
+
+        field_transformers = {}
+        for f in fields:
+            print(f)
+            if root.joinpath(f + ".pkl").exists():
+                t = joblib.load(root.joinpath(f + ".pkl"))
+                field_transformers[f] = t
+            else:
+                field_transformers[f] = None
+
+        instance = cls(transed_file, original_path, field_transformers)
+        return instance
+
+    def fetch(self, target_fields=(), progress=False):
+        _target = target_fields
         if len(_target) == 0:
-            _target = self.columns
+            _target = self.fields
 
-        for result in super().fetch(target_columns, progress):
+        for result in super().fetch(target_fields, progress):
             _result = []
             for r, t in zip(result, _target):
-                if t in self.indexed_columns:
+                if t in self.field_transformers:
                     # Space separated index string to int array.
                     _result.append([int(i) for i in r.split(" ")])
                 else:
