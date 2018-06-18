@@ -3,8 +3,6 @@ import sys
 import unittest
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 from chariot.storage import Storage
-from chariot.storage.csv_file import CsvFile
-from chariot.dataset import Dataset
 import chariot.transformer as ct
 from chariot.preprocessor import Preprocessor
 from chariot.dataset import TransformedDataset
@@ -15,25 +13,25 @@ class TestDataset(unittest.TestCase):
     def test_dataset(self):
         path = os.path.join(os.path.dirname(__file__), "./")
         storage = Storage(path)
-        csv = CsvFile(storage.data("raw/sample_dataset.csv"), delimiter="\t")
-        dataset = Dataset(csv, ["summary", "text"])
+        dataset = storage.file("raw/sample_dataset.csv",
+                               delimiter="\t").to_dataset(["summary", "text"])
         for d in dataset():
             print(d)
 
-        dumped = dataset.all("summary")
+        dumped = dataset.get("summary")
         print(dumped)
 
     def test_batch(self):
         path = os.path.join(os.path.dirname(__file__), "./")
         storage = Storage(path)
-        csv = CsvFile(storage.data("raw/corpus.csv"), delimiter="\t")
 
         preprocessor = Preprocessor(
                             tokenizer=ct.Tokenizer("ja"),
                             text_transformers=[ct.text.UnicodeNormalizer()],
                             indexer=ct.Indexer(min_df=0))
 
-        dataset = Dataset(csv, ["summary", "text"])
+        dataset = storage.file("raw/corpus.csv",
+                               delimiter="\t").to_dataset(["summary", "text"])
         preprocessor.fit(dataset.get())
 
         feed = dataset.to_feed(field_transformers={"summary": preprocessor,
@@ -48,7 +46,6 @@ class TestDataset(unittest.TestCase):
     def test_batch_iter(self):
         path = os.path.join(os.path.dirname(__file__), "./")
         storage = Storage(path)
-        csv = CsvFile(storage.data("raw/corpus_multi.csv"), delimiter="\t")
 
         preprocessor = Preprocessor(
                             tokenizer=ct.Tokenizer("en"),
@@ -56,7 +53,10 @@ class TestDataset(unittest.TestCase):
                             token_transformers=[ct.token.StopwordFilter("en")],
                             indexer=ct.Indexer(min_df=0))
 
-        dataset = Dataset(csv, ["label", "review", "comment"])
+        dataset = storage.file("raw/corpus_multi.csv",
+                               delimiter="\t").to_dataset(
+                                 ["label", "review", "comment"])
+
         preprocessor.fit(dataset.get("review", "comment"))
 
         feed = dataset.to_feed(field_transformers={

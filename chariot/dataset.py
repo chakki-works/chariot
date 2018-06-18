@@ -2,9 +2,11 @@ import os
 from pathlib import Path
 import shutil
 import json
+import pandas as pd
 from sklearn.externals import joblib
 from chariot.feed import Feed
 from chariot.transformer.adjuster import Adjuster
+from chariot.resource.csv_file import CsvFile
 
 
 class Dataset():
@@ -12,6 +14,21 @@ class Dataset():
     def __init__(self, data_file, fields):
         self.data_file = data_file
         self.fields = fields
+
+    @property
+    def file_root(self):
+        return os.path.dirname(self.data_file.path)
+
+    def to_dataframe(self):
+        if isinstance(self.data_file, CsvFile):
+            delimiter = self.data_file.delimiter
+            df = pd.read_csv(self.data_file.path, delimiter=delimiter,
+                             header=None, names=self.fields)
+            return df
+        else:
+            df = pd.read_table(self.data_file.path,
+                               header=None, names=self.fields)
+            return df
 
     def __call__(self, *fields):
         for result in self.fetch(target_fields=fields):

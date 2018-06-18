@@ -27,12 +27,19 @@ pip install chariot
 
 ## Data download
 
-You can download various dataset by using [chazutsu](https://github.com/chakki-works/chazutsu).
+You can download various dataset by using [chazutsu](https://github.com/chakki-works/chazutsu).  
+And read its data to `chariot.dataset`.
 
 ```py
 import chazutsu
-r = chazutsu.datasets.IMDB().download()
-r.train_data().head(5)
+from chariot.storage import Storage
+
+
+storage = Storage("your/data/root")
+r = chazutsu.datasets.IMDB().download(storage.path("raw"))
+
+dataset = storage.chazutsu(r).train_dataset
+dataset.to_dataframe().head(5)
 ```
 
 Then
@@ -46,14 +53,6 @@ Then
 4         0       2  Sometimes I rest my head and think about the r...
 ```
 
-(Following feature is under development)
-
-Prepare the `requirements_d.txt` to manage the data dependency.
-
-```
-movie_review_data:polarity
-your_original_data:v1 http://data/file/url/data.csv
-```
 
 ## Preprocess the NLP data
 

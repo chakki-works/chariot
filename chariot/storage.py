@@ -1,6 +1,8 @@
 import os
 import re
 from zipfile import ZipFile
+from chariot.resource.data_file import DataFile
+from chariot.resource.csv_file import CsvFile
 
 
 class Storage():
@@ -23,8 +25,23 @@ class Storage():
         """
         self.root = root
 
-    def data(self, target=""):
+    def path(self, target=""):
         return os.path.join(self.root, "data/{}".format(target))
+
+    def file(self, target, encoding="utf-8", delimiter=",", has_header=False):
+        path = self.path(target)
+        _, ext = os.path.splitext(path)
+        if ext in [".csv", ".tsv"]:
+            return CsvFile(path, encoding, delimiter, has_header)
+        else:
+            return DataFile(path, encoding)
+
+    def chazutsu(self, path_or_resource, columns=None, target="",
+                 separator="\t", pattern=()):
+
+        from chariot.resource.chazutsu_resource import ChazutsuResource
+        return ChazutsuResource(path_or_resource, columns,
+                                target, separator, pattern)
 
     def _to_snake(self, name):
         _name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
@@ -42,3 +59,5 @@ class Storage():
 
         with ZipFile(path) as zip:
             zip.extractall(location)
+
+

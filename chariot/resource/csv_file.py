@@ -1,6 +1,6 @@
 import csv
 from tqdm import tqdm
-from chariot.storage.data_file import DataFile
+from chariot.resource.data_file import DataFile
 
 
 class CsvFile(DataFile):
@@ -11,6 +11,13 @@ class CsvFile(DataFile):
         self.delimiter = delimiter
         self.has_header = has_header
         self.header = []
+
+    def to_dataset(self, fields=()):
+        from chariot.dataset import Dataset
+        fields = list(fields)
+        if len(fields) == 0:
+            fields = self.header
+        return Dataset(self, fields)
 
     def fetch(self, progress=False):
         done_header = not self.has_header
