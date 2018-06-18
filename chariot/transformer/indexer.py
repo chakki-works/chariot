@@ -1,7 +1,7 @@
 from collections import Counter
 import numbers
 from chariot.transformer.base_preprocessor import BasePreprocessor
-from chariot.transformer.tokenizer.token import Token
+from chariot.resource.word_vector import WordVector
 
 
 class Indexer(BasePreprocessor):
@@ -16,6 +16,22 @@ class Indexer(BasePreprocessor):
         self._end_of_seq = end_of_seq
         self.min_df = min_df
         self.size = size
+
+    def load_vocab(self, list_or_file):
+        reserved = [self._padding, self._unknown,
+                    self._begin_of_seq, self._end_of_seq]
+        reserved = [r for r in reserved if r]
+
+        if isinstance(list_or_file, (list, tuple)):
+            vocab = reserved + list(list_or_file)
+        else:
+            with open(list_or_file, encoding="utf-8") as f:
+                words = f.readlines()
+                words = [w.strip() for w in words]
+            reserved = [r for r in reserved if r not in words]
+            vocab = reserved + words
+
+        self._vocab = vocab
 
     @property
     def vocab(self):
@@ -110,3 +126,9 @@ class Indexer(BasePreprocessor):
                     break
 
         self._vocab = selected
+
+    def make_embedding(self, word_vector_path,
+                       encoding="utf-8", progress=False):
+        wv = WordVector(word_vector_path, encoding)
+        embedding = wv.load(self.vocab, progress=progress)
+        return embedding

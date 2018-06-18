@@ -148,4 +148,17 @@ for labels, reviews in feed.batch_iter(batch_size=32, epoch=10):
 You can download the pre-trained word vectors by [chakin](https://github.com/chakki-works/chakin).  
 And use these easily.
 
-(Under development)
+```py
+from chariot.storage import Storage
+from chariot.transformer.indexer import Indexer
+
+# Download word vector
+storage = Storage("your/data/root")
+storage.chakin(name="GloVe.6B.50d")
+
+# Make embedding matrix
+indexer = Indexer()
+indexer.load_vocab("your/vocab/file/path")
+embed = indexer.make_embedding(storage.path("external/glove.6B.50d.txt"))
+print(embed.shape)  # len(indexer.vocab) x 50 matrix
+```

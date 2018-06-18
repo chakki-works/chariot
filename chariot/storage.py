@@ -1,6 +1,8 @@
 import os
+import shutil
 import re
 from zipfile import ZipFile
+import gzip
 from chariot.resource.data_file import DataFile
 from chariot.resource.csv_file import CsvFile
 
@@ -43,21 +45,62 @@ class Storage():
         return ChazutsuResource(path_or_resource, columns,
                                 target, separator, pattern)
 
+    def chakin(self, lang="", number=-1, name=""):
+        import chakin
+        if lang:
+            chakin.search(lang)
+        elif number > -1 or name:
+            path = self.path("external")
+            table = chakin.downloader.load_datasets()
+
+            index = number
+            if number < 0:
+                index = table.index[table["Name"] == name].tolist()
+                index = index[0]
+
+            _name = table.iloc[index]["Name"]
+            _name = re.sub(r"[(|)|\.]", "_", _name).lower()
+
+            path = chakin.download(index, path)
+
+            base, ext = os.path.splitext(path)
+            _dir = os.path.dirname(path)
+            if ext == ".vec":
+                path = os.rename(path, os.path.join(_dir, _name + ext))
+            elif ext in [".zip", ".gz"]:
+                _path = self.expand(path, ext)
+                os.remove(path)
+                path = _path
+
+            return path
+
+        else:
+            raise Exception("You have to specify lang to search or "
+                            "number/name to download")
+
     def _to_snake(self, name):
         _name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
         _name = re.sub("([a-z0-9])([A-Z])", r"\1_\2", _name).lower()
         return _name
 
-    def expand_zip(self, path):
+    def expand(self, path, ext):
         file_name = os.path.basename(path)
         file_root, ext = os.path.splitext(file_name)
-        location = os.path.dirname(path)
-        archive_dir = os.path.join(location, file_root)
-        if os.path.exists(archive_dir):
-            print("The file {} is already expanded".format(
-                    os.path.abspath(path)))
 
-        with ZipFile(path) as zip:
-            zip.extractall(location)
+        if ext == ".gz":
+            with gzip.open(path, "rb") as f_in:
+                with open(file_root, "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+            return file_root
+        else:
+            location = os.path.dirname(path)
+            archive_dir = os.path.join(location, file_root)
+            if os.path.exists(archive_dir):
+                print("The file {} is already expanded".format(
+                        os.path.abspath(path)))
 
-
+            if ext == ".zip":
+                with ZipFile(path) as zip:
+                    zip.extractall(location)
+            
+            return location

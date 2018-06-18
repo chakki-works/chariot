@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name="chariot",
-    version="0.2.0",
+    version="0.3.0",
     description="Speedy data processing tool for NLP tasks",
     keywords=["machine learning", "nlp", "natural language processing"],
     author="icoxfog417",
@@ -25,6 +25,7 @@ setup(
         "spacy>=2.0.11",
         "pandas>=0.23.1",
         "chazutsu>=0.8.1",
+        "chakin>=0.0.6",
         "tqdm>=4.23.4"
     ],
 )
