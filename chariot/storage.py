@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import shutil
 import re
 from zipfile import ZipFile
@@ -27,11 +28,25 @@ class Storage():
         """
         self.root = root
 
-    def path(self, target=""):
+    @classmethod
+    def setup_data_dir(cls, path):
+        if not os.path.exists(path):
+            raise Exception("{} does not exist".format(path))
+
+        root = Path(path)
+        data_root = root.joinpath("data")
+        data_root.mkdir(exist_ok=True)
+        for _dir in ["raw", "external", "interim", "processed"]:
+            data_root.joinpath(_dir).mkdir(exist_ok=True)
+
+        storage = cls(path)
+        return storage
+
+    def data_path(self, target=""):
         return os.path.join(self.root, "data/{}".format(target))
 
     def file(self, target, encoding="utf-8", delimiter=",", has_header=False):
-        path = self.path(target)
+        path = self.data_path(target)
         _, ext = os.path.splitext(path)
         if ext in [".csv", ".tsv"]:
             return CsvFile(path, encoding, delimiter, has_header)
@@ -50,7 +65,7 @@ class Storage():
         if lang:
             chakin.search(lang)
         elif number > -1 or name:
-            path = self.path("external")
+            path = self.data_path("external")
             table = chakin.downloader.load_datasets()
 
             index = number
@@ -58,8 +73,12 @@ class Storage():
                 index = table.index[table["Name"] == name].tolist()
                 index = index[0]
 
-            _name = table.iloc[index]["Name"]
-            _name = re.sub(r"[(|)|\.]", "_", _name).lower()
+            _name = table.iloc[index]["Name"].lower()
+
+            for ext in [".txt", ".vec"]:
+                check_path = os.path.join(path, _name) + ext
+                if os.path.exists(check_path):
+                    return check_path
 
             path = chakin.download(index, path)
 
@@ -102,5 +121,5 @@ class Storage():
             if ext == ".zip":
                 with ZipFile(path) as zip:
                     zip.extractall(location)
-            
+
             return location

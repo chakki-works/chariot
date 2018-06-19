@@ -42,3 +42,6 @@ class Token():
 
     def __repr__(self):
         return "<{}:{}>".format(self.surface, self.pos)
+
+    def __reduce_ex__(self, proto):
+        return type(self), (self._token, self.token_type)

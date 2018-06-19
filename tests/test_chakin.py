@@ -19,7 +19,7 @@ class TestChakin(unittest.TestCase):
 
         indexer = Indexer()
         indexer.load_vocab(["you", "loaded", "word", "vector", "now"])
-        embed = indexer.make_embedding(storage.path("external/glove.6B.50d.txt"))
+        embed = indexer.make_embedding(storage.data_path("external/glove.6B.50d.txt"))
 
         self.assertEqual(embed.shape, (len(indexer.vocab), 50))
 

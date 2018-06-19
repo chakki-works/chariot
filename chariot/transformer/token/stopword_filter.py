@@ -3,7 +3,8 @@ from chariot.transformer.token.base import TokenFilter
 
 class StopwordFilter(TokenFilter):
 
-    def __init__(self, lang):
+    def __init__(self, lang, copy=True):
+        super().__init__(copy)
         self.lang = lang
 
     def apply(self, tokens):

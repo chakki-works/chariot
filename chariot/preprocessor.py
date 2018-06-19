@@ -1,4 +1,6 @@
 import re
+import copy
+import numpy as np
 from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.base import BaseEstimator, TransformerMixin
 from chariot.transformer.text.base import TextFilter, TextNormalizer
@@ -76,9 +78,12 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         self._validate_transformers()
-        Xt = X
+        Xt = self.check_array(X, True)
         for name, t in self._transformers:
+            original_copy_setting = t.copy
+            t.copy = False  # Don't copy in each transformer
             Xt = t.transform(Xt)
+            t.copy = original_copy_setting
         return Xt
 
     def inverse_transform(self, X):
@@ -105,3 +110,12 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
         for name, t in self._transformers:
             Xt = t.fit_transform(Xt)
         return Xt
+
+    def check_array(self, X, copy_obj=True):
+        if not copy_obj:
+            return X
+        else:
+            if isinstance(X, (np.ndarray, np.generic)):
+                return np.array(X)
+            else:
+                return copy.deepcopy(X)

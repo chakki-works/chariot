@@ -8,14 +8,19 @@ class Indexer(BasePreprocessor):
 
     def __init__(self, padding="__PAD__", unknown="__UNK__",
                  begin_of_seq="__BOS__", end_of_seq="__EOS__",
-                 min_df=1, size=-1):
+                 max_df=1.0, min_df=1, size=-1, copy=True):
+        super().__init__(copy)
         self._vocab = []
         self._padding = padding
         self._unknown = unknown
         self._begin_of_seq = begin_of_seq
         self._end_of_seq = end_of_seq
+        self.max_df = max_df
         self.min_df = min_df
         self.size = size
+
+        if max_df < 0 or min_df < 0:
+            raise ValueError("Negative value for max_df or min_df")
 
     def load_vocab(self, list_or_file):
         reserved = [self._padding, self._unknown,
@@ -88,13 +93,14 @@ class Indexer(BasePreprocessor):
 
     def fit(self, X, y=None):
         vocab = Counter()
-        dataset = []
+        length = 0
 
         # X should be list of tokens or dict
         if isinstance(X, dict):
             for columns in X:
                 for tokens in X[columns]:
                     vocab.update(self.token_to_words(tokens))
+                length = max(length, len(X[columns]))
         else:
             for row in X:
                 if len(row) > 0 and isinstance(row[0], (list, tuple)):
@@ -103,27 +109,32 @@ class Indexer(BasePreprocessor):
                         vocab.update(self.token_to_words(tokens))
                 else:
                     vocab.update(self.token_to_words(row))
+            length = len(X)
 
         reserved = [self._padding, self._unknown,
                     self._begin_of_seq, self._end_of_seq]
         reserved = [r for r in reserved if r]
 
         selected = reserved
-        if self.min_df >= 0:
-            md = self.min_df
-            min_count = (md if isinstance(md, numbers.Integral)
-                         else md * len(dataset))
-            for term, count in vocab.most_common():
-                if count <= min_count:
-                    continue
-                else:
-                    selected.append(term)
-        elif self.size > 0:
+        if self.size > 0:
             for term, count in vocab.most_common():
                 if len(selected) < self.size:
                     selected.append(term)
                 else:
                     break
+        else:
+            min_count = (self.min_df
+                         if isinstance(self.min_df, numbers.Integral)
+                         else self.min_df * length)
+            max_count = (self.max_df
+                         if isinstance(self.max_df, numbers.Integral)
+                         else self.max_df * length)
+
+            for term, count in vocab.most_common():
+                if count <= min_count or count >= max_count:
+                    continue
+                else:
+                    selected.append(term)
 
         self._vocab = selected
 

@@ -36,7 +36,7 @@ from chariot.storage import Storage
 
 
 storage = Storage("your/data/root")
-r = chazutsu.datasets.IMDB().download(storage.path("raw"))
+r = chazutsu.datasets.IMDB().download(storage.data_path("raw"))
 
 dataset = storage.chazutsu(r).train_dataset
 dataset.to_dataframe().head(5)
@@ -159,6 +159,6 @@ storage.chakin(name="GloVe.6B.50d")
 # Make embedding matrix
 indexer = Indexer()
 indexer.load_vocab("your/vocab/file/path")
-embed = indexer.make_embedding(storage.path("external/glove.6B.50d.txt"))
+embed = indexer.make_embedding(storage.data_path("external/glove.6B.50d.txt"))
 print(embed.shape)  # len(indexer.vocab) x 50 matrix
 ```

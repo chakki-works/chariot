@@ -20,22 +20,21 @@ class TestPreprocessors(unittest.TestCase):
         preprocessor = Preprocessor(
                             tokenizer=ct.Tokenizer("ja"),
                             text_transformers=[ct.text.UnicodeNormalizer()],
-                            indexer=ct.Indexer(min_df=0))
+                            indexer=ct.Indexer(size=50))
 
-        dataset = csv.to_dataset(["summary", "text"])
-        preprocessor.fit(dataset.get())
+        dataset = csv.to_dataset(["summary", "text"]).get()
+        preprocessor.fit(dataset)
         joblib.dump(preprocessor, "test_preprocessor.pkl")
 
         preprocessor = joblib.load("test_preprocessor.pkl")
-        transformed = preprocessor.transform(dataset.get())
+        transformed = preprocessor.transform(dataset)
         inversed = preprocessor.inverse_transform(transformed)
 
-        original = dataset.get()
-        for k in original:
-            for o, i in zip(original[k], inversed[k]):
+        for k in dataset:
+            for o, i in zip(dataset[k], inversed[k]):
                 self.assertEqual(o, "".join(i))
 
-        print(original)
+        print(inversed)
         os.remove("test_preprocessor.pkl")
 
     def test_indexed_dataset(self):
@@ -47,7 +46,7 @@ class TestPreprocessors(unittest.TestCase):
                             tokenizer=ct.Tokenizer("en"),
                             text_transformers=[ct.text.UnicodeNormalizer()],
                             token_transformers=[ct.token.StopwordFilter("en")],
-                            indexer=ct.Indexer(min_df=0))
+                            indexer=ct.Indexer(min_df=0, max_df=1.0))
 
         dataset = csv.to_dataset(["label", "review", "comment"])
         preprocessor.fit(dataset.get("review", "comment"))

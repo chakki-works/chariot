@@ -12,7 +12,7 @@ class TestChazutsu(unittest.TestCase):
     def test_chazutsu(self):
         path = os.path.join(os.path.dirname(__file__), "../")
         storage = Storage(path)
-        r = chazutsu.datasets.DUC2004().download(storage.path("raw"))
+        r = chazutsu.datasets.DUC2004().download(storage.data_path("raw"))
         dataset = storage.chazutsu(r).train_dataset
         print(dataset.to_dataframe().head(5))
         shutil.rmtree(dataset.file_root)
