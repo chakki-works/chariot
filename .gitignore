@@ -105,3 +105,4 @@ venv.bak/
 .vscode/
 tests/data/external/
 notebooks/data/
+notebooks/models/

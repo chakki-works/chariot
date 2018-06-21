@@ -21,8 +21,29 @@ class Tokenizer(BasePreprocessor):
         else:
             self.tokenizer = SpacyTokenizer(self.lang)
 
-    def apply(self, text):
-        return self.tokenizer.tokenize(text)
+    def _transform(self, X, func):
+        X = self.check_array(X)
+        if isinstance(X, dict):
+            for k in X:
+                X[k] = func(X[k])
+            return X
+        elif isinstance(X, (list, tuple)):
+            if len(X) > 0 and len(X[0]) > 0 and \
+               isinstance(X[0][0], (list, tuple)):
+                # row has multiple columns
+                for c in range(len(X[0])):
+                    column = []
+                    for r in range(len(X)):
+                        column.append(X[r][c])
+                    result = func(column)
+                    for r in range(len(X)):
+                        X[r][c] = result[r]
+            else:
+                X = func(X)
+        return X
+
+    def transform(self, X):
+        return self._transform(X, self.tokenizer.apply)
 
     def __reduce_ex__(self, proto):
         return type(self), (self.lang, self.copy)
