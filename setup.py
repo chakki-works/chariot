@@ -13,6 +13,7 @@ setup(
         "chariot",
         "chariot.resource",
         "chariot.transformer",
+        "chariot.transformer.adjuster",
         "chariot.transformer.text",
         "chariot.transformer.token",
         "chariot.transformer.tokenizer"

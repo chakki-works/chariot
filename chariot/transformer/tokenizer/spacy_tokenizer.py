@@ -13,15 +13,6 @@ class SpacyTokenizer():
 
         self._nlp = nlp
 
-    def apply(self, texts):
-        def text_iterator():
-            for t in texts:
-                yield t
-
-        tokenizeds = self._nlp.pipe(text_iterator())
-        result = []
-        for tokens in tokenizeds:
-            _tokens = [Token(t) for t in tokens]
-            result.append(_tokens)
-
-        return result
+    def tokenize(self, text):
+        tokens = self._nlp(text)
+        return [Token(t) for t in tokens]

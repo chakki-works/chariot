@@ -31,12 +31,6 @@ class MeCabTokenizer():
             node = node.next
         return tokens
 
-    def apply(self, texts):
-        _tokenized = []
-        for t in texts:
-            _tokenized.append(self.tokenizer.tokenize(t))
-        return _tokenized
-
 
 class JanomeTokenizer():
 
@@ -48,9 +42,3 @@ class JanomeTokenizer():
         tokens = self.tokenizer.tokenize(text)
         tokens = [Token(t, token_type="ja") for t in tokens]
         return tokens
-
-    def apply(self, texts):
-        _tokenized = []
-        for t in texts:
-            _tokenized.append(self.tokenizer.tokenize(t))
-        return _tokenized

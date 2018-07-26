@@ -4,8 +4,7 @@ import shutil
 import re
 from zipfile import ZipFile
 import gzip
-from chariot.resource.data_file import DataFile
-from chariot.resource.csv_file import CsvFile
+import pandas as pd
 
 
 class Storage():
@@ -45,20 +44,22 @@ class Storage():
     def data_path(self, target=""):
         return os.path.join(self.root, "data/{}".format(target))
 
-    def file(self, target, encoding="utf-8", delimiter=",", has_header=False):
+    def read(self, target, encoding="utf-8", delimiter=",",
+             header="infer", names=None):
         path = self.data_path(target)
-        _, ext = os.path.splitext(path)
-        if ext in [".csv", ".tsv"]:
-            return CsvFile(path, encoding, delimiter, has_header)
+        if names is not None:
+            df = pd.read_csv(path, delimiter=delimiter, header=None,
+                             names=names)
         else:
-            return DataFile(path, encoding)
+            df = pd.read_csv(path, delimiter=delimiter, header=header)
+        return df
 
-    def chazutsu(self, path_or_resource, columns=None, target="",
+    def chazutsu(self, path, columns=None, target="",
                  separator="\t", pattern=()):
 
-        from chariot.resource.chazutsu_resource import ChazutsuResource
-        return ChazutsuResource(path_or_resource, columns,
-                                target, separator, pattern)
+        from chazutsu.datasets.framework.resource import Resource
+        r = Resource(path, columns, target, separator, pattern)
+        return r
 
     def chakin(self, lang="", number=-1, name=""):
         import chakin

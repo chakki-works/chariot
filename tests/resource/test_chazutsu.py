@@ -13,9 +13,9 @@ class TestChazutsu(unittest.TestCase):
         path = os.path.join(os.path.dirname(__file__), "../")
         storage = Storage(path)
         r = chazutsu.datasets.DUC2004().download(storage.data_path("raw"))
-        dataset = storage.chazutsu(r).train_dataset
-        print(dataset.to_dataframe().head(5))
-        shutil.rmtree(dataset.file_root)
+        df = storage.chazutsu(r.root).data()
+        print(df.head(5))
+        shutil.rmtree(r.root)
 
 
 if __name__ == "__main__":

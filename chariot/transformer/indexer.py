@@ -1,30 +1,47 @@
 from collections import Counter
 import numbers
+from chariot.util import apply_map
 from chariot.transformer.base_preprocessor import BasePreprocessor
 from chariot.resource.word_vector import WordVector
 
 
 class Indexer(BasePreprocessor):
 
-    def __init__(self, padding="__PAD__", unknown="__UNK__",
-                 begin_of_seq="__BOS__", end_of_seq="__EOS__",
-                 max_df=1.0, min_df=1, size=-1, copy=True):
+    def __init__(self, padding="@@PADDING@@", unknown="@@UNKNOWN@@",
+                 begin_of_sequence="@@BEGIN_OF_SEQUENCE@@",
+                 end_of_sequence="@@END_OF_SEQUENCE@@",
+                 max_df=1.0, min_df=1, count=-1, copy=True):
         super().__init__(copy)
         self._vocab = []
         self._padding = padding
         self._unknown = unknown
-        self._begin_of_seq = begin_of_seq
-        self._end_of_seq = end_of_seq
+        self._begin_of_sequence = begin_of_sequence
+        self._end_of_sequence = end_of_sequence
         self.max_df = max_df
         self.min_df = min_df
-        self.size = size
+        self.count = count
 
         if max_df < 0 or min_df < 0:
             raise ValueError("Negative value for max_df or min_df")
 
-    def load_vocab(self, list_or_file):
+    @classmethod
+    def from_file(cls, path, padding="@@PADDING@@", unknown="@@UNKNOWN@@",
+                  begin_of_sequence="@@BEGIN_OF_SEQUENCE@@",
+                  end_of_sequence="@@END_OF_SEQUENCE@@",
+                  max_df=1.0, min_df=1, count=-1, copy=True):
+
+        instance = cls(padding, unknown, begin_of_sequence, end_of_sequence,
+                       max_df, min_df, count, copy)
+
+        with open(path, encoding="utf-8") as f:
+            words = f.readlines()
+            words = [w.strip() for w in words]
+        instance._vocab = words
+        return instance
+
+    def set_vocab(self, list_or_file):
         reserved = [self._padding, self._unknown,
-                    self._begin_of_seq, self._end_of_seq]
+                    self._begin_of_sequence, self._end_of_sequence]
         reserved = [r for r in reserved if r]
 
         if isinstance(list_or_file, (list, tuple)):
@@ -52,11 +69,11 @@ class Indexer(BasePreprocessor):
 
     @property
     def bos(self):
-        return self._vocab.index(self._begin_of_seq)
+        return self._vocab.index(self._begin_of_sequence)
 
     @property
     def eos(self):
-        return self._vocab.index(self._end_of_seq)
+        return self._vocab.index(self._end_of_sequence)
 
     def token_to_words(self, tokens):
         words = [t if isinstance(t, str) else t.surface for t in tokens]
@@ -89,36 +106,27 @@ class Indexer(BasePreprocessor):
     def inverse_transform(self, X):
         if len(self._vocab) == 0:
             raise Exception("Vocabulary has not made yet. Plase execute fit.")
-        return self._transform(X, self.inverse)
+        return apply_map(X, self.inverse, inplace=self.copy)
 
     def fit(self, X, y=None):
         vocab = Counter()
-        length = 0
-
-        # X should be list of tokens or dict
+        length = len(X)
         if isinstance(X, dict):
-            for columns in X:
-                for tokens in X[columns]:
-                    vocab.update(self.token_to_words(tokens))
-                length = max(length, len(X[columns]))
-        else:
-            for row in X:
-                if len(row) > 0 and isinstance(row[0], (list, tuple)):
-                    # row has multiple columns
-                    for tokens in row:
-                        vocab.update(self.token_to_words(tokens))
-                else:
-                    vocab.update(self.token_to_words(row))
-            length = len(X)
+            length = len(list(X.values)[0])
+
+        def update_vocab(element):
+            vocab.update(self.token_to_words(element))
+
+        apply_map(X, update_vocab)
 
         reserved = [self._padding, self._unknown,
-                    self._begin_of_seq, self._end_of_seq]
+                    self._begin_of_sequence, self._end_of_sequence]
         reserved = [r for r in reserved if r]
 
         selected = reserved
-        if self.size > 0:
+        if self.count > 0:
             for term, count in vocab.most_common():
-                if len(selected) < self.size:
+                if len(selected) < self.count:
                     selected.append(term)
                 else:
                     break
@@ -143,3 +151,18 @@ class Indexer(BasePreprocessor):
         wv = WordVector(word_vector_path, encoding)
         embedding = wv.load(self.vocab, progress=progress)
         return embedding
+
+    def make_padding(self, padding=True, length=-1,
+                     begin_of_sequenceuence=False, end_of_sequenceuence=False):
+        from chariot.transformer.adjuster import Padding
+        padding = Padding(padding=self.pad, length=length)
+        if begin_of_sequenceuence:
+            padding.begin_of_sequence = self.bos
+        if end_of_sequenceuence:
+            padding.end_of_sequence = self.eos
+
+        return padding
+
+    def make_categorical(self):
+        from chariot.transformer.adjuster import CategoricalLabel
+        return CategoricalLabel(len(self.vocab))

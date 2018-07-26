@@ -13,14 +13,13 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
 
     def __init__(self, tokenizer=None,
                  text_transformers=(), token_transformers=(),
-                 indexer=None, n_jobs=1):
+                 indexer=None):
         self.tokenizer = tokenizer
         if isinstance(self.tokenizer, str):
             self.tokenizer = Tokenizer(self.tokenizer)
         self.text_transformers = text_transformers
         self.token_transformers = token_transformers
         self.indexer = indexer
-        self.n_jobs = n_jobs
 
     def _to_snake(self, name):
         _name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)

@@ -3,7 +3,7 @@ import sys
 import unittest
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../"))
 from chariot.storage import Storage
-from chariot.resource.csv_file import CsvFile
+from chariot.resource.data_file import DataFile
 
 
 def resolve(path):
@@ -12,17 +12,10 @@ def resolve(path):
 
 class TestDataFile(unittest.TestCase):
 
-    def test_read(self):
-        path = os.path.join(os.path.dirname(__file__), "../")
-        storage = Storage(path)
-        csv = CsvFile(storage.data_path("raw/sample_dataset.csv"), delimiter="\t")
-        for line in csv.fetch():
-            print(line)
-
     def test_convert(self):
         path = os.path.join(os.path.dirname(__file__), "../")
         storage = Storage(path)
-        csv = CsvFile(storage.data_path("raw/sample_dataset.csv"), delimiter="\t")
+        csv = DataFile(storage.data_path("raw/sample_dataset.csv"))
 
         path_changed = csv.convert(data_dir_to="interim")
         correct = os.path.join(path, "./data/interim/sample_dataset.csv")
