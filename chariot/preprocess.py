@@ -2,6 +2,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 from chariot.transformer.base_preprocessor import BasePreprocessor
 from chariot.preprocessor import Preprocessor
+from chariot.base_processor import BaseProcessor
 
 
 def _apply(input, output, process, dataframe):
@@ -13,10 +14,10 @@ def _apply(input, output, process, dataframe):
     return (output, transformed)
 
 
-class Preprocess():
+class Preprocess(BaseProcessor):
 
     def __init__(self, spec):
-        self.spec = spec
+        super().__init__(spec)
 
     @classmethod
     def _make_tasks(cls, spec):

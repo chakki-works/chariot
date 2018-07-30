@@ -1,3 +1,4 @@
+import os
 import unittest
 import numpy as np
 import pandas as pd
@@ -8,7 +9,27 @@ from chariot.preprocess import Preprocess
 class TestPreprocess(unittest.TestCase):
 
     def test_preprocess(self):
+        data, preprocess = self._make_preprocess()
+        applied = preprocess.apply(data)
 
+        self.assertEqual(len(applied), 3)
+        for c in applied:
+            self.assertTrue(c in ["label", "scaled_1", "scaled_2"])
+
+    def test_save_load(self):
+        data, preprocess = self._make_preprocess()
+        path = os.path.join(os.path.dirname(__file__), "test_preprocess.tar.gz")
+        preprocess.save(path)
+
+        _preprocess = Preprocess.load(path)
+        applied = _preprocess.apply(data)
+
+        self.assertEqual(len(applied), 3)
+        for c in applied:
+            self.assertTrue(c in ["label", "scaled_1", "scaled_2"])
+        os.remove(path)
+
+    def _make_preprocess(self):
         data = {
             "label": np.random.uniform(size=100),
             "feature": np.random.uniform(size=100)
@@ -31,8 +52,4 @@ class TestPreprocess(unittest.TestCase):
             }
         })
 
-        applied = p.apply(df)
-
-        self.assertEqual(len(applied), 3)
-        for c in applied:
-            self.assertTrue(c in ["label", "scaled_1", "scaled_2"])
+        return df, p

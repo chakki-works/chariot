@@ -39,14 +39,14 @@ class TestFeeder(unittest.TestCase):
         feeder = Feeder({"label": preprocessor.indexer.make_categorical(),
                          "review": preprocessor.indexer.make_padding(length=5)})
 
-        adjusted = feeder.apply(preprocessed)
+        adjusted = feeder.apply(preprocessed, ignore=("comment"))
         self.assertEqual(len(adjusted["label"][0]),
                          len(preprocessor.indexer.vocab))
-        print(adjusted["review"])
 
         # Iterate
-        for batch in feeder.iterate(preprocessed, batch_size=1, epoch=1):
+        for batch in feeder.iterate(preprocessed, batch_size=1, epoch=1, ignore=("comment")):
             self.assertEqual(len(batch), 2)
+            self.assertEqual(len(batch["review"][0]), 5)
 
 
 if __name__ == "__main__":

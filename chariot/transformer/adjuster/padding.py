@@ -20,11 +20,11 @@ class Padding(BaseAdjuster):
             if self.end_of_sequence > 0:
                 sequence = sequence + [self.end_of_sequence]
 
-            if self.padding > 0:
-                if len(sequence) < length:
-                    pad_size = length - len(sequence)
+            if self.length > 0:
+                if len(sequence) < self.length:
+                    pad_size = self.length - len(sequence)
                     sequence = sequence + [self.padding] * pad_size
-                elif len(sequence) > length:
+                elif len(sequence) > self.length:
                     sequence = sequence[:length]
 
             return np.array(sequence)
