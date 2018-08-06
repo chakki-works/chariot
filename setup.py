@@ -4,7 +4,7 @@ from setuptools import setup
 setup(
     name="chariot",
     version="0.4.0",
-    description="Speedy data processing tool for NLP tasks",
+    description="Data Transporter for your NLP model.",
     keywords=["machine learning", "nlp", "natural language processing"],
     author="icoxfog417",
     author_email="icoxfog417@yahoo.co.jp",
