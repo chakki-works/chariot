@@ -28,9 +28,9 @@ class WordVector(DataFile):
                     embedding = np.zeros((len(vocab), embedding_size))
                     initialized = True
 
-            vector = np.asarray(values[1:], dtype="float32")
             if word in vocab:
                 index = vocab.index(word)
+                vector = np.asarray(values[1:], dtype="float32")
                 embedding[index] = vector
         return embedding
 

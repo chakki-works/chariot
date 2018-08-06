@@ -4,12 +4,16 @@ from joblib import Parallel, delayed
 from chariot.base_processor import BaseProcessor
 
 
-def _apply(target, process, data):
+def _apply(target, process, data, inverse=False):
     input_data = data[target]
     if isinstance(input_data, pd.Series):
         input_data = input_data.values
 
-    transformed = process.transform(input_data)
+    if not inverse:
+        transformed = process.transform(input_data)
+    else:
+        if hasattr(process, "inverse_transform"):
+            transformed = process.inverse_transform(input_data)
     return (target, transformed)
 
 
@@ -30,7 +34,7 @@ class Feeder(BaseProcessor):
             keys = [k for k in data if k not in ignore]
         return keys
 
-    def apply(self, data=None, ignore=(), n_jobs=-1):
+    def apply(self, data=None, ignore=(), n_jobs=-1, inverse=False):
         _data = data if data else self._resource
         tasks = []
         for k in self.spec:
@@ -38,7 +42,7 @@ class Feeder(BaseProcessor):
                 tasks.append((k, self.spec[k]))
 
         target_transformed = Parallel(n_jobs=n_jobs)(
-            delayed(_apply)(i, p, _data) for i, p in tasks)
+            delayed(_apply)(i, p, _data, inverse) for i, p in tasks)
         target_transformed = dict(target_transformed)
 
         applied = {}
@@ -92,3 +96,6 @@ class Feeder(BaseProcessor):
                                            ignore)
         for b in generator():
             yield b
+
+    def inverse_transform(self, batch, n_jobs=-1, ignore=()):
+        return self.apply(batch, n_jobs=n_jobs, ignore=ignore, inverse=True)

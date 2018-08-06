@@ -55,3 +55,11 @@ class BaseProcessor():
 
         instance = cls(spec)
         return instance
+
+    def inverse_transform(self, X):
+        self._validate_transformers()
+        Xt = X
+        for name, t in list(self._transformers)[::-1]:
+            if hasattr(t, "inverse_transform"):
+                Xt = t.inverse_transform(Xt)
+        return Xt

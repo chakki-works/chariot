@@ -2,6 +2,7 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 import unittest
+import numpy as np
 from chariot.storage import Storage
 import chariot.transformer as ct
 from chariot.preprocessor import Preprocessor
@@ -22,7 +23,7 @@ class TestFeeder(unittest.TestCase):
                             tokenizer=ct.Tokenizer("en"),
                             text_transformers=[ct.text.UnicodeNormalizer()],
                             token_transformers=[ct.token.StopwordFilter("en")],
-                            indexer=ct.Indexer(min_df=0, max_df=1.0))
+                            vocabulary=ct.Vocabulary(min_df=0, max_df=1.0))
 
         preprocessor.fit(df[["review", "comment"]])
 
@@ -36,17 +37,21 @@ class TestFeeder(unittest.TestCase):
         preprocessed = prep.apply(df)
 
         # Feed
-        feeder = Feeder({"label": preprocessor.indexer.make_categorical(),
-                         "review": preprocessor.indexer.make_padding(length=5)})
+        feeder = Feeder({"label": ct.adjuster.CategoricalLabel.from_(preprocessor),
+                         "review": ct.adjuster.Padding.from_(preprocessor, length=5)})
 
         adjusted = feeder.apply(preprocessed, ignore=("comment"))
         self.assertEqual(len(adjusted["label"][0]),
-                         len(preprocessor.indexer.vocab))
+                         len(preprocessor.vocabulary._vocab))
 
         # Iterate
         for batch in feeder.iterate(preprocessed, batch_size=1, epoch=1, ignore=("comment")):
             self.assertEqual(len(batch), 2)
             self.assertEqual(len(batch["review"][0]), 5)
+
+            inversed = feeder.inverse_transform(batch)
+            self.assertEqual(inversed["label"][0], np.argmax(batch["label"]))
+            self.assertLessEqual(len(inversed["review"][0]), 5)
 
 
 if __name__ == "__main__":

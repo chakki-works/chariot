@@ -1,23 +1,21 @@
 # chariot
 
-Speedy data processing tool for NLP tasks
+**Data Transporter for your NLP model.**
 
-1. Data download & expansion powered by [chazutsu](https://github.com/chakki-works/chazutsu).
-2. Tokenize data and make vocabulary powered by [spaCy](https://spacy.io/).
-3. Prepare the pre-trained word vectors by [chakin](https://github.com/chakki-works/chakin)
+* Prepare dataset
+  * Data download & expantion powered by [chazutsu](https://github.com/chakki-works/chazutsu).
+* Build preprocess pipeline
+  * Build the preprocess pipeline like [scikit-learn Pipeline](http://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html).
+  * Multi-language text tokenization powered by [spaCy](https://spacy.io/).
+* Execute respective preprocess in parallel
+  * Parallel execution powered by [Joblib](https://pythonhosted.org/joblib/index.html)
+* Ready to train your model
+  * Load pre-trained word vectors powered by [chakin](https://github.com/chakki-works/chakin)
+  * Sampling a batch and adjust to the model (padding etc).
 
-Now, only you have to do is making the model!
+**chariot** enables you to concentrate on making your model!
 
-The structure of data directory follows the [`Cookiecutter Data Science`](https://drivendata.github.io/cookiecutter-data-science/).
-
-```
-Project root
-  └── data
-       ├── external     <- Data from third party sources (ex. word vectors).
-       ├── interim      <- Intermediate data that has been transformed.
-       ├── processed    <- The final, canonical data sets for modeling.
-       └── raw          <- The original, immutable data dump.
-```
+![chariot flow](./docs/images/chariot_flow.png)
 
 ## Install
 
@@ -25,10 +23,9 @@ Project root
 pip install chariot
 ```
 
-## Data download
+## Prepare dataset
 
 You can download various dataset by using [chazutsu](https://github.com/chakki-works/chazutsu).  
-And read its data to `chariot.dataset`.
 
 ```py
 import chazutsu
@@ -38,8 +35,8 @@ from chariot.storage import Storage
 storage = Storage("your/data/root")
 r = chazutsu.datasets.IMDB().download(storage.data_path("raw"))
 
-dataset = storage.chazutsu(r).train_dataset
-dataset.to_dataframe().head(5)
+df = storage.chazutsu(r.root).data()
+df.head(5)
 ```
 
 Then
@@ -53,8 +50,18 @@ Then
 4         0       2  Sometimes I rest my head and think about the r...
 ```
 
+`Storage` class manage the directory structure that follows [cookie-cutter datascience](https://drivendata.github.io/cookiecutter-data-science/).
 
-## Preprocess the NLP data
+```
+Project root
+  └── data
+       ├── external     <- Data from third party sources (ex. word vectors).
+       ├── interim      <- Intermediate data that has been transformed.
+       ├── processed    <- The final, canonical data sets for modeling.
+       └── raw          <- The original, immutable data dump.
+```
+
+## Build preprocess pipeline
 
 All preprocessors are defined at `chariot.transformer`.  
 Transformers are implemented following to the scikit-learn transformer manner.  Thanks to that, you can chain & save preprocessors easily.
@@ -67,10 +74,10 @@ from chariot.preprocessor import Preprocessor
 
 
 preprocessor = Preprocessor(
-                  tokenizer=ct.Tokenizer("en"),
                   text_transformers=[ct.text.UnicodeNormalizer()],
+                  tokenizer=ct.Tokenizer("en"),
                   token_transformers=[ct.token.StopwordFilter("en")],
-                  indexer=ct.Indexer())
+                  vocabulary=ct.Vocabulary())
 
 preprocessor.fit(your_dataset)
 joblib.dump(preprocessor, "preprocessor.pkl")  # Save
@@ -78,7 +85,7 @@ joblib.dump(preprocessor, "preprocessor.pkl")  # Save
 preprocessor = joblib.load("preprocessor.pkl")  # Load
 ```
 
-It means you don't need code of preprocessors in your inference (predict) server.
+It means you don't need the code of preprocessor when inference (prediction).
 
 There is 5 type of transformers for preprocessors.
 
@@ -93,72 +100,75 @@ There is 5 type of transformers for preprocessors.
   * Normalize/Filter the tokens after tokenization.
   * `TokenNormalizer`: Normalize tokens (to lower, to original form etc).
   * `TokenFilter`: Filter tokens (extract only noun etc).
-* Indexer
+* Vocabulary
   * Make vocabulary and convert tokens to indices.
-* Adjuster
-  * After the data is converted to indices (=int array), padding sequence etc.
 
-You can save the preprocessed result to disk.
+## Execute respective preprocess in parallel
 
-```py
-from chariot.dataset import Dataset
-
-
-dataset = Dataset(csv_file, ["label", "review", "comment"])
-
-# Save indexed
-indexed = dataset.save_transformed("token_to_indexed", {
-            "label": None,
-            "review": preprocessor
-          })
-
-```
-
-The transformers are also saved with transformed data. For that reason you can inverse-transform the data after loading the dataset. 
+After you prepare the preprocessors, you can apply these to your data in parallel.
 
 ```py
-# Load indexed data
-indexed = TransformedDataset.load(original_csv_file, "token_to_indexed")
+from chariot.preprocess import Preprocess
 
-words = indexed.field_transformers["review"].inverse_transform(indexed.get("review"))
-```
 
-## Feed the data to your model
-
-`chariot` supports the feature for feeding the data to the model.
-
-```py
-sentiment_dataset = Dataset(csv_file, ["label", "review"])
-preprocessor.fit(sentiment_dataset.get("review"))
-
-feed = sentiment_dataset.to_feed(field_transformers={
-    "label": None,
-    "review": preprocessor
+p = Preprocess({
+    "Category": label_encoder,
+    "Text": preprocessor
 })
 
-for labels, reviews in feed.batch_iter(batch_size=32, epoch=10):
-    y = labels.to_int_array()
-    X = reviews.adjust(padding=5, to_categorical=True)
-
-    your_model.train(X, y)
+applied = p.apply(your_data)
 ```
 
-## Prepare the pre-trained word vectors
+You can apply multiple preprocessors to one column.
 
-You can download the pre-trained word vectors by [chakin](https://github.com/chakki-works/chakin).  
-And use these easily.
+```py
+from chariot.preprocess import Preprocess
+
+
+p = Preprocess({
+    "Category": label_encoder,
+    "Text": {
+      extract_word_features,
+      extract_char_features,
+    }
+})
+```
+
+## Ready to train your model
+
+`chariot` supports feeding the data to your model.
+
+```py
+from chariot.feeder import Feeder
+from chariot.transformer.adjuster import CategoricalLabel, Padding
+
+
+feeder = Feeder({"Category": CategoricalLabel.from_(preprocessor),
+                 "Text": Padding.from_(preprocessor, length=5)})
+
+# Full batch
+full_batch = feeder.apply(preprocessed)
+
+# Iterate batch
+for batch in feeder.iterate(preprocessed, batch_size=32, epoch=10):
+    model.train_on_batch(batch["Text"], batch["Category"])
+
+```
+
+You can use pre-trained word vectors by [chakin](https://github.com/chakki-works/chakin).  
+
 
 ```py
 from chariot.storage import Storage
-from chariot.transformer.indexer import Indexer
+from chariot.transformer.vocabulary import Vocabulary
 
 # Download word vector
 storage = Storage("your/data/root")
 storage.chakin(name="GloVe.6B.50d")
 
 # Make embedding matrix
-indexer = Indexer()
-indexer.load_vocab("your/vocab/file/path")
-embed = indexer.make_embedding(storage.data_path("external/glove.6B.50d.txt"))
-print(embed.shape)  # len(indexer.vocab) x 50 matrix
+vocab = Vocabulary()
+vocab.set(["you", "loaded", "word", "vector", "now"])
+embed = vocab.make_embedding(storage.data_path("external/glove.6B.50d.txt"))
+print(embed.shape)  # (len(vocab.count), 50)
 ```

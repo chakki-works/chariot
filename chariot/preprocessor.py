@@ -5,7 +5,7 @@ from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.base import BaseEstimator, TransformerMixin
 from chariot.transformer.text.base import TextFilter, TextNormalizer
 from chariot.transformer.token.base import TokenFilter, TokenNormalizer
-from chariot.transformer.indexer import Indexer
+from chariot.transformer.vocabulary import Vocabulary
 from chariot.transformer.tokenizer import Tokenizer
 
 
@@ -13,13 +13,13 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
 
     def __init__(self, tokenizer=None,
                  text_transformers=(), token_transformers=(),
-                 indexer=None):
+                 vocabulary=None):
         self.tokenizer = tokenizer
         if isinstance(self.tokenizer, str):
             self.tokenizer = Tokenizer(self.tokenizer)
         self.text_transformers = text_transformers
         self.token_transformers = token_transformers
-        self.indexer = indexer
+        self.vocabulary = vocabulary
 
     def _to_snake(self, name):
         _name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
@@ -32,8 +32,8 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
         if self.tokenizer:
             transformers += [self.tokenizer]
         transformers += self.token_transformers
-        if self.indexer:
-            transformers += [self.indexer]
+        if self.vocabulary:
+            transformers += [self.vocabulary]
 
         return (
             (self._to_snake(t.__class__.__name__) + "_", t) for t in
@@ -49,8 +49,8 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
                 self.token_transformers.append(t)
             elif isinstance(t, Tokenizer):
                 self.tokenizer = t
-            elif isinstance(t, Indexer):
-                self.indexer = t
+            elif isinstance(t, Vocabulary):
+                self.vocabulary = t
 
     def get_params(self, deep=True):
         return self._get_params("_transformers", deep=deep)
@@ -97,7 +97,7 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
         self._validate_transformers()
         Xt = X
         for name, t in self._transformers:
-            if isinstance(t, Indexer):
+            if isinstance(t, Vocabulary):
                 t.fit(Xt)
             else:
                 Xt = t.fit_transform(Xt)

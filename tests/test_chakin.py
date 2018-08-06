@@ -1,7 +1,7 @@
 import os
 import unittest
 from chariot.storage import Storage
-from chariot.transformer.indexer import Indexer
+from chariot.transformer.vocabulary import Vocabulary
 
 
 class TestChakin(unittest.TestCase):
@@ -17,11 +17,11 @@ class TestChakin(unittest.TestCase):
         path = os.path.join(os.path.dirname(__file__), "./")
         storage = Storage(path)
 
-        indexer = Indexer()
-        indexer.set_vocab(["you", "loaded", "word", "vector", "now"])
-        embed = indexer.make_embedding(storage.data_path("external/glove.6B.50d.txt"))
+        vocab = Vocabulary()
+        vocab.set(["you", "loaded", "word", "vector", "now"])
+        embed = vocab.make_embedding(storage.data_path("external/glove.6B.50d.txt"))
 
-        self.assertEqual(embed.shape, (len(indexer.vocab), 50))
+        self.assertEqual(embed.shape, (len(vocab), 50))
 
 
 if __name__ == "__main__":
