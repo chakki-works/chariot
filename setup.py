@@ -4,7 +4,7 @@ from setuptools import setup
 setup(
     name="chariot",
     version="0.4.1",
-    description="Deliver the read-to-train data to your NLP model.",
+    description="Deliver the ready-to-train data to your NLP model.",
     keywords=["machine learning", "nlp", "natural language processing"],
     author="icoxfog417",
     author_email="icoxfog417@yahoo.co.jp",

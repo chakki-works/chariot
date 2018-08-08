@@ -1,6 +1,6 @@
 # chariot
 
-**Deliver the read-to-train data to your NLP model.**
+**Deliver the ready-to-train data to your NLP model.**
 
 * Prepare Dataset
   * You can prepare typical NLP datasets through the [chazutsu](https://github.com/chakki-works/chazutsu).
