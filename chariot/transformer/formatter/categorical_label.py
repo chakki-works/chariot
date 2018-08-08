@@ -1,9 +1,9 @@
 import numpy as np
-from chariot.transformer.adjuster.base import BaseAdjuster
+from chariot.transformer.formatter.base import BaseFormatter
 from chariot.preprocessor import Preprocessor
 
 
-class CategoricalLabel(BaseAdjuster):
+class CategoricalLabel(BaseFormatter):
 
     def __init__(self, class_count=-1):
         super().__init__()

@@ -1,21 +1,20 @@
 # chariot
 
-**Data Transporter for your NLP model.**
+**Deliver the read-to-train data to your NLP model.**
 
-* Prepare dataset
-  * Data download & expantion powered by [chazutsu](https://github.com/chakki-works/chazutsu).
-* Build preprocess pipeline
-  * Build the preprocess pipeline like [scikit-learn Pipeline](http://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html).
-  * Multi-language text tokenization powered by [spaCy](https://spacy.io/).
-* Execute respective preprocess in parallel
-  * Parallel execution powered by [Joblib](https://pythonhosted.org/joblib/index.html)
-* Ready to train your model
-  * Load pre-trained word vectors powered by [chakin](https://github.com/chakki-works/chakin)
-  * Sampling a batch and adjust to the model (padding etc).
+* Prepare Dataset
+  * You can prepare typical NLP datasets through the [chazutsu](https://github.com/chakki-works/chazutsu).
+* Build & Run Preprocess
+  * You can build the preprocess pipeline like [scikit-learn Pipeline](http://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html).
+  * Preprocesses for each dataset column are executed in parallel by [Joblib](https://pythonhosted.org/joblib/index.html).
+  * Multi-language text tokenization is supported by [spaCy](https://spacy.io/).
+* Format Batch
+  * Sampling a batch from preprocessed dataset and format it to train the model (padding etc).
+  * You can use pre-trained word vectors through the [chakin](https://github.com/chakki-works/chakin)
 
-**chariot** enables you to concentrate on making your model!
+**chariot** enables you to concentrate on training your model!
 
-![chariot flow](./docs/images/chariot_flow.png)
+![chariot flow](./docs/images/chariot_feature.gif)
 
 ## Install
 
@@ -26,6 +25,8 @@ pip install chariot
 ## Prepare dataset
 
 You can download various dataset by using [chazutsu](https://github.com/chakki-works/chazutsu).  
+
+![1_prepare_dataset.PNG](./docs/images/1_prepare_dataset.PNG)
 
 ```py
 import chazutsu
@@ -59,7 +60,11 @@ Project root
        └── raw          <- The original, immutable data dump.
 ```
 
-## Build preprocess pipeline
+## Build & Run Preprocess
+
+![2_build_and_run.PNG](./docs/images/2_build_and_run.PNG)
+
+### Build a preprocess pipeline
 
 All preprocessors are defined at `chariot.transformer`.  
 Transformers are implemented following to the scikit-learn transformer manner.  Thanks to that, you can chain & save preprocessors easily.
@@ -101,7 +106,7 @@ There is 5 type of transformers for preprocessors.
 * Vocabulary
   * Make vocabulary and convert tokens to indices.
 
-## Execute respective preprocess in parallel
+### Run preprocesses for each dataset column
 
 After you prepare the preprocessors, you can apply these to your data in parallel.
 
@@ -132,13 +137,17 @@ p = Preprocess({
 })
 ```
 
-## Ready to train your model
+Of course, you can serialize and save `Preprocess` instance.
+
+## Format Batch
 
 `chariot` supports feeding the data to your model.
 
+![3_format_batch.PNG](./docs/images/3_format_batch.PNG)
+
 ```py
 from chariot.feeder import Feeder
-from chariot.transformer.adjuster import CategoricalLabel, Padding
+from chariot.transformer.formatter import CategoricalLabel, Padding
 
 
 feeder = Feeder({"Category": CategoricalLabel.from_(preprocessor),
@@ -153,7 +162,7 @@ for batch in feeder.iterate(preprocessed, batch_size=32, epoch=10):
 
 ```
 
-You can use pre-trained word vectors by [chakin](https://github.com/chakki-works/chakin).  
+You can convert the word to vector by pre-trained word vectors by [chakin](https://github.com/chakki-works/chakin).  
 
 
 ```py
@@ -170,3 +179,7 @@ vocab.set(["you", "loaded", "word", "vector", "now"])
 embed = vocab.make_embedding(storage.data_path("external/glove.6B.50d.txt"))
 print(embed.shape)  # (len(vocab.count), 50)
 ```
+
+Overall process is like following.
+
+![chariot_flow.png](./docs/images/chariot_flow.png)

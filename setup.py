@@ -3,8 +3,8 @@ from setuptools import setup
 
 setup(
     name="chariot",
-    version="0.4.0",
-    description="Data Transporter for your NLP model.",
+    version="0.4.1",
+    description="Deliver the read-to-train data to your NLP model.",
     keywords=["machine learning", "nlp", "natural language processing"],
     author="icoxfog417",
     author_email="icoxfog417@yahoo.co.jp",
@@ -13,7 +13,7 @@ setup(
         "chariot",
         "chariot.resource",
         "chariot.transformer",
-        "chariot.transformer.adjuster",
+        "chariot.transformer.formatter",
         "chariot.transformer.text",
         "chariot.transformer.token",
         "chariot.transformer.tokenizer"

@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
-from chariot.transformer.adjuster.base import BaseAdjuster
+from chariot.transformer.formatter.base import BaseFormatter
 from chariot.preprocessor import Preprocessor
 
 
-class Padding(BaseAdjuster):
+class Padding(BaseFormatter):
 
     def __init__(self, padding=0, length=-1,
                  begin_of_sequence=-1, end_of_sequence=-1):
