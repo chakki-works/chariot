@@ -1,0 +1,12 @@
+language: python
+python:
+  - "3.6"
+before_install:
+  - python --version
+install:
+  - pip install -r requirements-test.txt
+# command to run tests
+script:
+  - pytest --cov=chariot tests/
+after_success:
+  codecov

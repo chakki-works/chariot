@@ -1,6 +1,10 @@
 # chariot
 
+[![Build Status](https://travis-ci.org/chakki-works/chariot.svg?branch=master)](https://travis-ci.org/chakki-works/chariot)
+[![codecov](https://codecov.io/gh/chakki-works/chariot/branch/master/graph/badge.svg)](https://codecov.io/gh/chakki-works/chariot)
+
 **Deliver the ready-to-train data to your NLP model.**
+
 
 * Prepare Dataset
   * You can prepare typical NLP datasets through the [chazutsu](https://github.com/chakki-works/chazutsu).
