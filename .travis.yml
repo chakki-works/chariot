@@ -5,6 +5,7 @@ before_install:
   - python --version
 install:
   - pip install -r requirements-test.txt
+  - python -m spacy download en
 # command to run tests
 script:
   - pytest --cov=chariot tests/
