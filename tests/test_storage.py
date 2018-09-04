@@ -13,7 +13,8 @@ class TestStorage(unittest.TestCase):
         root = os.path.join(os.path.dirname(__file__), "../../")
         storage = Storage(root)
         correct_path = os.path.join(root, "data/raw")
-        self.assertEqual(resolve(storage.data_path("raw")), resolve(correct_path))
+        self.assertEqual(resolve(storage.data_path("raw")),
+                         resolve(correct_path))
 
 
 if __name__ == "__main__":

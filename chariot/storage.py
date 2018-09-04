@@ -27,20 +27,6 @@ class Storage():
         """
         self.root = root
 
-    @classmethod
-    def setup_data_dir(cls, path):
-        if not os.path.exists(path):
-            raise Exception("{} does not exist".format(path))
-
-        root = Path(path)
-        data_root = root.joinpath("data")
-        data_root.mkdir(exist_ok=True)
-        for _dir in ["raw", "external", "interim", "processed"]:
-            data_root.joinpath(_dir).mkdir(exist_ok=True)
-
-        storage = cls(path)
-        return storage
-
     def data_path(self, target=""):
         return os.path.join(self.root, "data/{}".format(target))
 
@@ -81,18 +67,18 @@ class Storage():
                 if os.path.exists(check_path):
                     return check_path
 
-            path = chakin.download(index, path)
+            vec_path = chakin.download(index, path)
 
-            base, ext = os.path.splitext(path)
-            _dir = os.path.dirname(path)
+            base, ext = os.path.splitext(vec_path)
+            _dir = os.path.dirname(vec_path)
             if ext == ".vec":
-                path = os.rename(path, os.path.join(_dir, _name + ext))
+                vec_path = os.rename(vec_path, os.path.join(_dir, _name + ext))
             elif ext in [".zip", ".gz"]:
-                _path = self.expand(path, ext)
-                os.remove(path)
-                path = _path
+                _path = self.expand(vec_path, ext)
+                os.remove(vec_path)
+                vec_path = _path
 
-            return path
+            return vec_path
 
         else:
             raise Exception("You have to specify lang to search or "
@@ -104,18 +90,19 @@ class Storage():
         return _name
 
     def expand(self, path, ext):
+        location = Path(os.path.dirname(path))
         file_name = os.path.basename(path)
         file_root, ext = os.path.splitext(file_name)
 
         if ext == ".gz":
+            file_path = location.joinpath(file_root)
             with gzip.open(path, "rb") as f_in:
-                with open(file_root, "wb") as f_out:
+                with open(file_path, "wb") as f_out:
                     shutil.copyfileobj(f_in, f_out)
-            return file_root
+            return file_path
         else:
-            location = os.path.dirname(path)
-            archive_dir = os.path.join(location, file_root)
-            if os.path.exists(archive_dir):
+            dir_path = os.path.join(location, file_root)
+            if os.path.exists(dir_path):
                 print("The file {} is already expanded".format(
                         os.path.abspath(path)))
 

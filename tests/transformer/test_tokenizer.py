@@ -1,7 +1,4 @@
-import os
-import sys
 import unittest
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../"))
 from chariot.transformer.tokenizer import Tokenizer
 
 
@@ -11,13 +8,27 @@ class TestTokenizer(unittest.TestCase):
         tokenizer = Tokenizer(lang="ja")
         text = "日本語の形態素解析、マジ卍。"
         tokens = tokenizer.transform(text)
-        print(tokens)
+
+        for t in tokens:
+            self.assertFalse(t.is_spacy)
+            self.assertTrue(t.is_ja)
+            self.assertTrue(t.surface)
+            self.assertTrue(t.base_form)
+            self.assertTrue(t.pos)
+            self.assertTrue(t.tag)
 
     def test_en_tokenize(self):
         tokenizer = Tokenizer(lang="en")
         text = "Tom goes to a park that Mary is playing."
         tokens = tokenizer.transform(text)
-        print(tokens)
+
+        for t in tokens:
+            self.assertTrue(t.is_spacy)
+            self.assertFalse(t.is_ja)
+            self.assertTrue(t.surface)
+            self.assertTrue(t.base_form)
+            self.assertTrue(t.pos)
+            self.assertTrue(t.tag)
 
 
 if __name__ == "__main__":

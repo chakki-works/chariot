@@ -70,7 +70,7 @@ class DataFile():
             if progress:
                 iterator = tqdm(f, total=total_count)
             for line in iterator:
-                yield line
+                yield line.strip()
 
     def to_array(self):
         lines = []

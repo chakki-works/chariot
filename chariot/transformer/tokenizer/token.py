@@ -3,6 +3,10 @@ class Token():
     def __init__(self, token, token_type="spaCy"):
         self._token = token
         self.token_type = token_type
+        self.__surface = ""
+
+    def set_surface(self, surface):
+        self.__surface = surface
 
     @property
     def is_spacy(self):
@@ -14,7 +18,9 @@ class Token():
 
     @property
     def surface(self):
-        if self.token_type == "spaCy":
+        if self.__surface:
+            return self.__surface
+        elif self.token_type == "spaCy":
             return self._token.text
         elif self.token_type == "ja":
             return self._token.surface

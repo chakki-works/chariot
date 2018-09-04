@@ -6,15 +6,6 @@ from chariot.transformer.tokenizer import Tokenizer
 
 class TestSpacy(unittest.TestCase):
 
-    def test_speed(self):
-        tokenizer = Tokenizer(lang="en")
-        data = test_text.split("\n")
-
-        start = time.time()
-        tokenizer.transform(data)
-        elapsed_time = time.time() - start
-        print("elapsed_time:{0}".format(elapsed_time) + "[sec]")
-
     def test_nlp(self):
         nlp = spacy.load("en", disable=["textcat", "ner", "parser"])
         data = test_text.split("\n")

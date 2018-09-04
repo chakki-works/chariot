@@ -34,6 +34,16 @@ class TestDataFile(unittest.TestCase):
         correct = storage.data_path("raw/sample_dataset.txt")
         self.assertEqual(resolve(ext_changed.path), resolve(correct))
 
+    def test_read_file(self):
+        path = os.path.join(os.path.dirname(__file__), "../")
+        storage = Storage(path)
+        csv = DataFile(storage.data_path("raw/sample_dataset.csv"))
+
+        content = csv.to_array()
+        fetched = list(csv.fetch(progress=True))
+        for c, f in zip(content, fetched):
+            self.assertEqual(c, f)
+
 
 if __name__ == "__main__":
     unittest.main()
