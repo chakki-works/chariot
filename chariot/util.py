@@ -12,7 +12,7 @@ def apply_map(data, func, inplace=False):
         return result
     elif isinstance(data, dict):
         result = data if inplace else {}
-        for k in list(data.keys):
+        for k in list(data.keys()):
             result[k] = [func(row) for row in data[k]]
         return result
     elif isinstance(data, (list, tuple)):
@@ -20,7 +20,7 @@ def apply_map(data, func, inplace=False):
 
         # 2d array
         if len(data) > 0 and isinstance(data[0], (list, tuple)):
-            data_dim = np.array(data[0]).shape
+            data_dim = len(np.array(data[0]).shape)
             for i, row in enumerate(data):
                 if data_dim == 1:
                     result[i] = func(row)

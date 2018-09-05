@@ -26,8 +26,7 @@ class Vocabulary(BasePreprocessor):
 
     @classmethod
     def from_file(cls, path, padding="@@PADDING@@", unknown="@@UNKNOWN@@",
-                  begin_of_sequence="@@BEGIN_OF_SEQUENCE@@",
-                  end_of_sequence="@@END_OF_SEQUENCE@@",
+                  begin_of_sequence="", end_of_sequence="",
                   max_df=1.0, min_df=1, limit=-1, copy=True):
 
         instance = cls(padding, unknown, begin_of_sequence, end_of_sequence,
@@ -124,7 +123,7 @@ class Vocabulary(BasePreprocessor):
 
         reserved = [self._padding, self._unknown,
                     self._begin_of_sequence, self._end_of_sequence]
-        reserved = [r for r in reserved if r]
+        reserved = [r for r in reserved if r]  # filter no setting token
 
         selected = reserved
         if self.limit > 0:
@@ -142,7 +141,7 @@ class Vocabulary(BasePreprocessor):
                          else self.max_df * length)
 
             for term, limit in vocab.most_common():
-                if limit <= min_limit or limit >= max_limit:
+                if limit < min_limit or limit > max_limit:
                     continue
                 else:
                     selected.append(term)
