@@ -3,7 +3,7 @@ site_description: Deliver the ready-to-train data to your NLP model.
 repo_url: https://github.com/chakki-works/chariot
 edit_uri: ""
 site_author: chakki-works
-pages:
+nav:
     - Home: index.md
     - Tutorial:
         - Installation: tutorial/install.md
