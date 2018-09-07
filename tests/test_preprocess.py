@@ -10,7 +10,7 @@ class TestPreprocess(unittest.TestCase):
 
     def test_preprocess(self):
         data, preprocess = self._make_preprocess()
-        applied = preprocess.apply(data)
+        applied = preprocess.transform(data)
 
         self.assertEqual(len(applied), 3)
         for c in applied:
@@ -22,7 +22,7 @@ class TestPreprocess(unittest.TestCase):
         preprocess.save(path)
 
         _preprocess = Preprocess.load(path)
-        applied = _preprocess.apply(data)
+        applied = _preprocess.transform(data)
 
         self.assertEqual(len(applied), 3)
         for c in applied:

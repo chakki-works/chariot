@@ -32,13 +32,13 @@ class TestFeeder(unittest.TestCase):
         })
 
         # Apply preprocessed
-        preprocessed = prep.apply(df)
+        preprocessed = prep.transform(df)
 
         # Feed
         feeder = Feeder({"label": ct.formatter.CategoricalLabel.from_(preprocessor),
                          "review": ct.formatter.Padding.from_(preprocessor, length=5)})
 
-        adjusted = feeder.apply(preprocessed, ignore=("comment"))
+        adjusted = feeder.transform(preprocessed, ignore=("comment"))
         self.assertEqual(len(adjusted["label"][0]),
                          len(preprocessor.vocabulary._vocab))
 

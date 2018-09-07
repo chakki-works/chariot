@@ -5,7 +5,17 @@ edit_uri: ""
 site_author: chakki-works
 pages:
     - Home: index.md
-    - Features: features.md
-    - User Guide:
-        - Installation: install.md
-        - Basic Usage: usage.md
+    - Tutorial:
+        - Installation: tutorial/install.md
+        - Make preprocessors: tutorial/make_preprocessor.md
+        - Make a preprocessor pipeline: tutorial/make_pipeline.md
+        - Work with your Model: tutorial/model_integration.md
+        - Prepare NLP resources: tutorial/prepare_resources.md
+        - Make custom preprocessors: tutorial/make_custom_preprocessor.md
+    - Demo: https://github.com/chakki-works/chariot
+    - Documentation: document.md
+extra_css:
+    - css/extra.css
+theme:
+    name: mkdocs
+    custom_dir: docs/custom_theme

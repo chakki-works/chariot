@@ -34,7 +34,7 @@ class Feeder(BaseProcessor):
             keys = [k for k in data if k not in ignore]
         return keys
 
-    def apply(self, data=None, ignore=(), n_jobs=-1, inverse=False):
+    def transform(self, data=None, ignore=(), n_jobs=-1, inverse=False):
         _data = data if data else self._resource
         tasks = []
         for k in self.spec:
@@ -86,7 +86,7 @@ class Feeder(BaseProcessor):
                             batch[key] = _data[key][selected]
 
                 count += 1
-                yield self.apply(batch, n_jobs=n_jobs)
+                yield self.transform(batch, n_jobs=n_jobs)
 
         return steps_per_epoch, generator
 
@@ -98,4 +98,4 @@ class Feeder(BaseProcessor):
             yield b
 
     def inverse_transform(self, batch, n_jobs=-1, ignore=()):
-        return self.apply(batch, n_jobs=n_jobs, ignore=ignore, inverse=True)
+        return self.transform(batch, n_jobs=n_jobs, ignore=ignore, inverse=True)

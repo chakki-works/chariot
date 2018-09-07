@@ -5,9 +5,9 @@ from chariot.preprocessor import Preprocessor
 
 class CategoricalLabel(BaseFormatter):
 
-    def __init__(self, class_count=-1):
+    def __init__(self, num_class=-1):
         super().__init__()
-        self.class_count = class_count
+        self.num_class = num_class
 
     @classmethod
     def from_(cls, vocabulary_or_preprocessor):
@@ -22,9 +22,9 @@ class CategoricalLabel(BaseFormatter):
         input_shape = y.shape
         y = y.ravel()
         n = y.shape[0]
-        categorical = np.zeros((n, self.class_count), dtype=np.float32)
+        categorical = np.zeros((n, self.num_class), dtype=np.float32)
         categorical[np.arange(n), y] = 1
-        output_shape = input_shape + (self.class_count,)
+        output_shape = input_shape + (self.num_class,)
         categorical = np.reshape(categorical, output_shape)
         return categorical
 

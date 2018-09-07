@@ -1,4 +1,5 @@
 import unittest
+from chariot.transformer.tokenizer import Tokenizer
 from chariot.transformer.vocabulary import Vocabulary
 
 
@@ -17,6 +18,16 @@ class TestVocabulary(unittest.TestCase):
         self.assertEqual(vocab.unk, vocab.get().index("_unk_"))
         self.assertEqual(vocab.bos, vocab.get().index("_bos_"))
         self.assertEqual(vocab.eos, vocab.get().index("_eos_"))
+
+    def test_setter_token(self):
+        vocab = Vocabulary()
+        text = "you are making the vocabulary"
+        words = Tokenizer(lang="en").transform(text)
+        vocab.set(words)
+
+        vocab_size = len(words) + len(["_pad_", "_unk_", "_bos", "_eos"])
+        self.assertEqual(len(vocab.get()), vocab_size)
+        print(vocab.get())
 
     def test_fit_transform(self):
         vocab = Vocabulary(padding="_pad_", unknown="_unk_",

@@ -2,6 +2,7 @@ from collections import Counter
 import numbers
 from chariot.util import apply_map
 from chariot.transformer.base_preprocessor import BasePreprocessor
+from chariot.transformer.tokenizer.token import Token
 from chariot.resource.word_vector import WordVector
 
 
@@ -44,7 +45,12 @@ class Vocabulary(BasePreprocessor):
         reserved = [r for r in reserved if r]
 
         if isinstance(list_or_file, (list, tuple)):
-            vocab = reserved + list(list_or_file)
+            def get_surface(token):
+                if isinstance(token, Token):
+                    return token.surface
+                else:
+                    return token
+            vocab = reserved + [get_surface(t) for t in list_or_file]
         else:
             with open(list_or_file, encoding="utf-8") as f:
                 words = f.readlines()
