@@ -12,7 +12,7 @@ pages:
         - Work with your Model: tutorial/model_integration.md
         - Prepare NLP resources: tutorial/prepare_resources.md
         - Make custom preprocessors: tutorial/make_custom_preprocessor.md
-    - Demo: https://github.com/chakki-works/chariot
+    - Demo: https://github.com/chakki-works/chariot/blob/master/notebooks/movie_review_sentiment_analysis.ipynb
     - Documentation: document.md
 extra_css:
     - css/extra.css
