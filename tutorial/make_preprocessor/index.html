@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="chakki-works">
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Make preprocessors - chariot</title>
+        
+        <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+        <link href="../../css/extra.css" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Raleway:400,500" rel="stylesheet">
+
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <script src="../../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../../js/bootstrap-3.0.3.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container">
+
+                <!-- Collapsed navigation -->
+                <div class="navbar-header">
+                    <!-- Expander button -->
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="../..">chariot</a>
+                </div>
+
+                <!-- Expanded navigation -->
+                <div class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li >
+                                <a href="../..">Home</a>
+                            </li>
+                            <li class="dropdown active">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tutorial <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li >
+    <a href="../install/">Installation</a>
+</li>
+                                    
+<li class="active">
+    <a href="./">Make preprocessors</a>
+</li>
+                                    
+<li >
+    <a href="../make_pipeline/">Make a preprocessor pipeline</a>
+</li>
+                                    
+<li >
+    <a href="../model_integration/">Work with your Model</a>
+</li>
+                                    
+<li >
+    <a href="../prepare_resources/">Prepare NLP resources</a>
+</li>
+                                    
+<li >
+    <a href="../make_custom_preprocessor/">Make custom preprocessors</a>
+</li>
+                                </ul>
+                            </li>
+                            <li >
+                                <a href="https://github.com/chakki-works/chariot/blob/master/notebooks/movie_review_sentiment_analysis.ipynb">Demo</a>
+                            </li>
+                            <li >
+                                <a href="../../document.md">Documentation</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li >
+                                <a rel="next" href="../install/">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li >
+                                <a rel="prev" href="../make_pipeline/">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://github.com/chakki-works/chariot"><i class="fa fa-github"></i> GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+        <li class="main active"><a href="#text-preprocessor">Text preprocessor</a></li>
+        <li class="main "><a href="#tokenizer">Tokenizer</a></li>
+        <li class="main "><a href="#token-preprocessor">Token preprocessor</a></li>
+        <li class="main "><a href="#vocabulary">Vocabulary</a></li>
+        <li class="main "><a href="#formatter">Formatter</a></li>
+    </ul>
+</div></div>
+                <div class="col-md-9" role="main">
+
+<h2 id="title">Make preprocessors</h2>
+
+<hr />
+<p>There are 5 kinds of preprocessor in <code>chariot</code>.</p>
+<ul>
+<li>Text reprocessor</li>
+<li>Tokenizer</li>
+<li>Token preprocessor</li>
+<li>Vocabulary</li>
+<li>Formatter</li>
+</ul>
+<p>Each preprocessor is defined as <a href="http://scikit-learn.org/stable/modules/generated/sklearn.base.TransformerMixin.html">scikit-learn <code>Transformer</code></a>. Because of this, these preprocessors locate at <code>chariot.transformer</code>.</p>
+<p>You can initialize parameters of preprocessor by <code>fit</code>, and apply preprocess by <code>transform</code>.</p>
+<h3 id="text-preprocessor">Text preprocessor</h3>
+<p>The role of the <code>Text preprocessor</code> is arranging text before tokenization.</p>
+<pre><code class="py">import chariot.transformer as ct
+
+
+text = &quot;Hey! you preprocess text now :)&quot;
+preprocessed = ct.text.SymbolFilter().transform(text)
+</code></pre>
+
+<pre><code>&gt; Hey you preprocess text now
+</code></pre>
+
+<h3 id="tokenizer">Tokenizer</h3>
+<p>The role of the <code>Tokenizer</code> is tokenizing text.</p>
+<pre><code class="py">import chariot.transformer as ct
+
+
+text = &quot;Hey you preprocess text now&quot;
+tokens = ct.Tokenizer(lang=&quot;en&quot;).transform(text)
+</code></pre>
+
+<pre><code>&gt; [&lt;Hey:INTJ&gt;, &lt;you:PRON&gt;, &lt;preprocess:ADJ&gt;, &lt;text:NOUN&gt;, &lt;now:ADV&gt;]
+</code></pre>
+
+<p>When tokenize a text, chariot use <a href="https://github.com/explosion/spaCy"><code>spacy</code></a> mainly. You can specify language by <code>lang</code> parameter. But if you want to tokenize Japanese text, you have to prepare the <a href="http://mocobeta.github.io/janome/"><code>Janome</code></a> or <a href="http://taku910.github.io/mecab/"><code>MeCab</code></a> since spacy does not support Japanese well.</p>
+<h3 id="token-preprocessor">Token preprocessor</h3>
+<p>The role of the <code>Token preprocessor</code> is filter/normalize tokens before building vocabulary.</p>
+<pre><code class="py">import chariot.transformer as ct
+
+
+text = &quot;Hey you preprocess text now&quot;
+tokens = ct.Tokenizer(lang=&quot;en&quot;).transform(text)
+filtered = ct.token.StopwordFilter(lang=&quot;en&quot;).transform(tokens)
+</code></pre>
+
+<pre><code>&gt; [&lt;Hey:INTJ&gt;, &lt;preprocess:ADJ&gt;, &lt;text:NOUN&gt;]
+</code></pre>
+
+<h3 id="vocabulary">Vocabulary</h3>
+<p>The role of the <code>Vocabulary</code> is convert word to vocabulary index.</p>
+<pre><code class="py">import chariot.transformer as ct
+
+
+vocab = Vocabulary()
+
+doc = [
+    [&quot;you&quot;, &quot;are&quot;, &quot;reading&quot;, &quot;the&quot;, &quot;book&quot;],
+    [&quot;I&quot;, &quot;don't&quot;, &quot;know&quot;, &quot;its&quot;, &quot;title&quot;],
+]
+
+vocab.fit(doc)
+text = [&quot;you&quot;, &quot;know&quot;, &quot;book&quot;, &quot;title&quot;]
+indexed = vocab.transform(text)
+inversed = vocab.inverse_transform(indexed)
+</code></pre>
+
+<pre><code>&gt; [4, 11, 8, 13]
+&gt; ['you', 'know', 'book', 'title']
+</code></pre>
+
+<p>You can specify the reserved word for unknown word etc and set parameters to limit vocabulary size. Example like following.</p>
+<pre><code class="py">vocab = Vocabulary(padding=&quot;_pad_&quot;, unknown=&quot;_unk_&quot;, min_df=1)
+</code></pre>
+
+<h3 id="formatter">Formatter</h3>
+<p>The role of the <code>Formatter</code> is adjust data for your model.</p>
+<pre><code class="py">import chariot.transformer as ct
+
+
+formatter = ct.formatter.Padding(padding=0, length=5)
+
+data = [
+    [1, 2],
+    [3, 4, 5],
+    [1, 2, 3, 4, 5]
+]
+
+padded = formatter.transform(data)
+</code></pre>
+
+<pre><code>&gt; [[1 2 0 0 0]
+   [3 4 5 0 0]
+   [1 2 3 4 5]]
+</code></pre>
+
+<p>Of Course you can use <code>Formatter</code> to batch data.</p>
+<p>Now you learned the role of each preprocessor. Then let's <a href="../make_pipeline/">make preprocessor pipeline by composing these</a>.</p></div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="https://buttons.github.io/buttons.js"></script>
+        
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js" defer></script>
+        <script src="../../search/main.js" defer></script>
+
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form role="form">
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="Keyboard Shortcuts Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Keyboard Shortcuts</h4>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
