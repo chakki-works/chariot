@@ -3,6 +3,7 @@ from chariot.util import apply_map
 from .ja_tokenizer import MeCabTokenizer
 from .ja_tokenizer import JanomeTokenizer
 from .spacy_tokenizer import SpacyTokenizer
+from .split_tokenizer import SplitTokenizer
 
 
 class Tokenizer(BasePreprocessor):
@@ -19,6 +20,8 @@ class Tokenizer(BasePreprocessor):
                 self.tokenizer = MeCabTokenizer()
             except Exception as ex:
                 self.tokenizer = JanomeTokenizer()
+        elif self.lang is None:
+            self.tokenizer = SplitTokenizer()
         else:
             self.tokenizer = SpacyTokenizer(self.lang)
 

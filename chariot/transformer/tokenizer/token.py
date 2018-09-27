@@ -24,6 +24,8 @@ class Token():
             return self._token.text
         elif self.token_type == "ja":
             return self._token.surface
+        else:
+            return self._token
 
     @property
     def base_form(self):
@@ -31,6 +33,8 @@ class Token():
             return self._token.lemma_
         elif self.token_type == "ja":
             return self._token.base_form
+        else:
+            return "-"
 
     @property
     def pos(self):
@@ -38,6 +42,8 @@ class Token():
             return self._token.pos_
         elif self.token_type == "ja":
             return self._token.part_of_speech[0]
+        else:
+            return "-"
 
     @property
     def tag(self):
@@ -45,6 +51,8 @@ class Token():
             return self._token.tag_
         elif self.token_type == "ja":
             return self._token.part_of_speech[1]
+        else:
+            return "-"
 
     def __repr__(self):
         return "<{}:{}>".format(self.surface, self.pos)
