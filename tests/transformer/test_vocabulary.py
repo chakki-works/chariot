@@ -22,7 +22,7 @@ class TestVocabulary(unittest.TestCase):
     def test_setter_token(self):
         vocab = Vocabulary()
         text = "you are making the vocabulary"
-        words = Tokenizer(lang="en").transform(text)
+        words = Tokenizer(lang="en").transform([text])
         vocab.set(words)
 
         vocab_size = len(words) + len(["_pad_", "_unk_", "_bos", "_eos"])
@@ -41,13 +41,13 @@ class TestVocabulary(unittest.TestCase):
 
         vocab.fit(doc)
         text = ["you", "know", "book", "title"]
-        indexed = vocab.transform(text)
-        inversed = vocab.inverse_transform(indexed)
+        indexed = vocab.transform([text])
+        inversed = vocab.inverse_transform(indexed)[0]
         self.assertEqual(tuple(text), tuple(inversed))
 
         text = ["you", "know", "my", "title"]
-        indexed = vocab.transform(text)
-        inversed = vocab.inverse_transform(indexed)
+        indexed = vocab.transform([text])
+        inversed = vocab.inverse_transform(indexed)[0]
         self.assertEqual(inversed[2], "_unk_")
 
 

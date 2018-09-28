@@ -23,7 +23,7 @@ class TestFeeder(unittest.TestCase):
                             token_transformers=[ct.token.StopwordFilter("en")],
                             vocabulary=ct.Vocabulary(min_df=0, max_df=1.0))
 
-        preprocessor.fit(df[["review", "comment"]])
+        preprocessor.fit(df.loc[:, ["review", "comment"]])
 
         # Build preprocess
         prep = Preprocess({

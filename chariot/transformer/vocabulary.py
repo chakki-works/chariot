@@ -123,7 +123,8 @@ class Vocabulary(BasePreprocessor):
             length = len(list(X.values)[0])
 
         def update_vocab(element):
-            vocab.update(self.token_to_words(element))
+            words = self.token_to_words(element)
+            vocab.update(words)
 
         apply_map(X, update_vocab)
 

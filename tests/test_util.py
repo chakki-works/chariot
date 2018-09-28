@@ -1,4 +1,5 @@
 import unittest
+import copy
 import numpy as np
 import pandas as pd
 from chariot.util import apply_map
@@ -7,6 +8,12 @@ from chariot.util import apply_map
 class TestUtil(unittest.TestCase):
 
     def test_apply_map(self):
+        self._test_apply_map(False)
+
+    def test_apply_map_inplace(self):
+        self._test_apply_map(True)
+
+    def _test_apply_map(self, inplace):
         value_dict = {
             "column1": [1, 2, 3, 4, 5],
             "column2": [4, 5, 6, 7, 8],
@@ -43,7 +50,10 @@ class TestUtil(unittest.TestCase):
                 if d is None:
                     continue
                 print("{}-{}".format(k, _k))
-                result = apply_map(d, func)
+                _d = copy.deepcopy(d)
+                result = apply_map(_d, func, inplace)
+                if inplace:
+                    result = _d
                 if _k == "DataFrame":
                     self.assertEqual(tuple(self.flatten(result)),
                                      tuple(func(self.flatten(d))))
@@ -55,10 +65,6 @@ class TestUtil(unittest.TestCase):
                         self.assertEqual(tuple(self.flatten(result[kx])),
                                          tuple(func(self.flatten(d[kx]))))
                 elif _k == "list":
-                    if k == "value":
-                        # 1d array is considered as one array instance
-                        func = lambda x: [e * 2 for e in x]
-                        result = apply_map(d, func)
                     self.assertEqual(tuple(self.flatten(result)),
                                      tuple(func(self.flatten(d))))
 

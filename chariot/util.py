@@ -5,11 +5,25 @@ import numpy as np
 def apply_map(data, func, inplace=False):
 
     if isinstance(data, pd.DataFrame):
-        result = data.applymap(func)
+        # apply and apply_map call function twice.
+        result = data if inplace else {}
+        for c in data.columns:
+            s = list(map(func, data[c].values))
+            if inplace:
+                result.loc[:, c] = s
+            else:
+                result[c] = s
+        if not inplace:
+            result = pd.DataFrame.from_dict(result)
         return result
     elif isinstance(data, pd.Series):
-        result = data.apply(func)
-        return result
+        if inplace:
+            for i, e in enumerate(map(func, data.values)):
+                data.iat[i] = e
+            return data
+        else:
+            result = pd.Series(list(map(func, data.values)))
+            return result
     elif isinstance(data, dict):
         result = data if inplace else {}
         for k in list(data.keys()):
@@ -31,7 +45,8 @@ def apply_map(data, func, inplace=False):
                         _row.append(func(column))
                     result[i] = _row
         else:
-            result = func(data)
+            for i, e in enumerate(data):
+                result[i] = func(e)
         return result
     else:
         return func(data)
