@@ -11,7 +11,7 @@ class Vocabulary(BasePreprocessor):
     def __init__(self, padding="@@PADDING@@", unknown="@@UNKNOWN@@",
                  begin_of_sequence="@@BEGIN_OF_SEQUENCE@@",
                  end_of_sequence="@@END_OF_SEQUENCE@@",
-                 max_df=1.0, min_df=1, limit=-1, copy=True):
+                 max_df=1.0, min_df=1, vocab_size=-1, copy=True):
         super().__init__(copy)
         self._vocab = []
         self._padding = padding
@@ -20,7 +20,7 @@ class Vocabulary(BasePreprocessor):
         self._end_of_sequence = end_of_sequence
         self.max_df = max_df
         self.min_df = min_df
-        self.limit = limit
+        self.vocab_size = vocab_size
 
         if max_df < 0 or min_df < 0:
             raise ValueError("Negative value for max_df or min_df")
@@ -28,10 +28,10 @@ class Vocabulary(BasePreprocessor):
     @classmethod
     def from_file(cls, path, padding="@@PADDING@@", unknown="@@UNKNOWN@@",
                   begin_of_sequence="", end_of_sequence="",
-                  max_df=1.0, min_df=1, limit=-1, copy=True):
+                  max_df=1.0, min_df=1, vocab_size=-1, copy=True):
 
         instance = cls(padding, unknown, begin_of_sequence, end_of_sequence,
-                       max_df, min_df, limit, copy)
+                       max_df, min_df, vocab_size, copy)
 
         with open(path, encoding="utf-8") as f:
             words = f.readlines()
@@ -133,9 +133,9 @@ class Vocabulary(BasePreprocessor):
         reserved = [r for r in reserved if r]  # filter no setting token
 
         selected = reserved
-        if self.limit > 0:
-            for term, limit in vocab.most_common():
-                if len(selected) < self.limit:
+        if self.vocab_size > 0:
+            for term, count in vocab.most_common():
+                if len(selected) < self.vocab_size:
                     selected.append(term)
                 else:
                     break
@@ -147,13 +147,14 @@ class Vocabulary(BasePreprocessor):
                          if isinstance(self.max_df, numbers.Integral)
                          else self.max_df * length)
 
-            for term, limit in vocab.most_common():
-                if limit < min_limit or limit > max_limit:
+            for term, count in vocab.most_common():
+                if count < min_limit or count > max_limit:
                     continue
                 else:
                     selected.append(term)
 
         self._vocab = selected
+        return self
 
     def make_embedding(self, word_vector_path,
                        encoding="utf-8", progress=False):

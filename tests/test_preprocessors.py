@@ -17,7 +17,7 @@ class TestPreprocessors(unittest.TestCase):
         preprocessor = Preprocessor(
                             tokenizer=ct.Tokenizer("ja"),
                             text_transformers=[ct.text.UnicodeNormalizer()],
-                            vocabulary=ct.Vocabulary(limit=50))
+                            vocabulary=ct.Vocabulary(vocab_size=50))
 
         preprocessor.fit(df[["summary", "text"]])
         joblib.dump(preprocessor, "test_preprocessor.pkl")

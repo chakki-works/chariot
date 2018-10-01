@@ -38,12 +38,12 @@ class TestFeeder(unittest.TestCase):
         feeder = Feeder({"label": ct.formatter.CategoricalLabel.from_(preprocessor),
                          "review": ct.formatter.Padding.from_(preprocessor, length=5)})
 
-        adjusted = feeder.transform(preprocessed, ignore=("comment"))
+        adjusted = feeder.transform(preprocessed, ignores=("comment"))
         self.assertEqual(len(adjusted["label"][0]),
                          len(preprocessor.vocabulary._vocab))
 
         # Iterate
-        for batch in feeder.iterate(preprocessed, batch_size=1, epoch=1, ignore=("comment")):
+        for batch in feeder.iterate(preprocessed, batch_size=1, epoch=1, ignores=("comment")):
             self.assertEqual(len(batch), 2)
             self.assertEqual(len(batch["review"][0]), 5)
 
