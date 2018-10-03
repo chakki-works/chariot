@@ -14,3 +14,8 @@ class TestTextTransformer(unittest.TestCase):
         filtered = tfm.SymbolFilter(filters="!?@^_").transform([text])[0]
         filtered = [w for w in filtered.split() if w.strip()]
         self.assertEqual(len(filtered), 4)
+
+    def test_lower_normalizer(self):
+        text = "MY NAME is Joe"
+        normalized = tfm.LowerNormalizer().transform([text])[0]
+        self.assertEqual(normalized, "my name is joe")

@@ -41,7 +41,8 @@ class Token():
         if self.token_type == "spaCy":
             return self._token.pos_
         elif self.token_type == "ja":
-            return self._token.part_of_speech[0]
+            pos = self._token.part_of_speech.split(",")[0]
+            return pos
         else:
             return "-"
 
@@ -50,7 +51,8 @@ class Token():
         if self.token_type == "spaCy":
             return self._token.tag_
         elif self.token_type == "ja":
-            return self._token.part_of_speech[1]
+            tag = self._token.part_of_speech.split(",")[1]
+            return tag
         else:
             return "-"
 
