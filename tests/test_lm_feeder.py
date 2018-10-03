@@ -89,7 +89,6 @@ class TestLanguageModelFeeder(unittest.TestCase):
             self.assertEqual(d.tolist(), batches[index:index+s_len].T.tolist())
             self.assertEqual(t.tolist(), batches[index+s_len].tolist())
             index += s_len
-        raise Exception("ex")
 
 
 if __name__ == "__main__":
