@@ -134,30 +134,48 @@ class LanguageModelFeeder(BaseProcessor):
 
         self.set_resource(data, batch_size)
         steps_per_epoch = (len(self._resource) - 1) // sequence_length
+        if not sequencial:
+            steps_per_epoch = steps_per_epoch * len(range(2, sequence_length))
+
         _generator = self.spec[self.key]
 
         def generator():
             count = 0
             _epoch = 0
+            count_limit = (len(self._resource) - 1) // sequence_length
             while True:
-                if count > 0 and count % steps_per_epoch == 0:
+                index = count * sequence_length
+                for length in range(1, sequence_length + 1):
+                    data, target = _generator.generate(self._resource, index, length)
+                    yield data.T, target[-1].T
+
+                count += 1
+                if count % count_limit == 0:
                     _epoch += 1
                     count = 0
                     if epoch > 0 and _epoch >= epoch:
                         break
-                
+
+        def seq_generator():
+            count = 0
+            _epoch = 0
+            while True:
                 index = count * sequence_length
                 data, target = _generator.generate(self._resource, index, sequence_length)
                 count += 1
-                if sequencial:
-                    yield data, target
-                else:
-                    # Predict one word from sequence
-                    yield data.T, target[-1].T
+                if count % steps_per_epoch == 0:
+                    _epoch += 1
+                    count = 0
+                    if epoch > 0 and _epoch >= epoch:
+                        break
 
-        return steps_per_epoch, generator
+                yield data, target
 
-    def iterate(self, data, batch_size, sequence_length, epoch=-1, sequencial=True):
-        _, generator = self.make_generator(data, batch_size, sequence_length, epoch, sequencial)
+        return steps_per_epoch, seq_generator if sequencial else generator
+
+    def iterate(self, data, batch_size, sequence_length, epoch=-1,
+                sequencial=True):
+        _, generator = self.make_generator(data, batch_size, sequence_length,
+                                           epoch, sequencial)
         for d, t in generator():
             yield d, t

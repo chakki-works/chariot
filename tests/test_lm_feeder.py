@@ -54,12 +54,12 @@ class TestLanguageModelFeeder(unittest.TestCase):
 
     def test_feed_content(self):
         feeder = LanguageModelFeeder({"sentence": ct.formatter.ShiftGenerator()})
-        content = np.arange(20).reshape(1, -1)
+        content = np.arange(120).reshape(1, -1)
         data = {"sentence": content}
 
         # Iterate
         b_len = 2
-        s_len = 3
+        s_len = 6
         batches = content.reshape((b_len, -1)).T
         """
         batches will be
@@ -84,11 +84,21 @@ class TestLanguageModelFeeder(unittest.TestCase):
          13]
         """
         index = 0
+        s_len_i = 1
+        epoch = 3
         for d, t in feeder.iterate(data, batch_size=b_len,
-                                   sequence_length=s_len, epoch=1, sequencial=False):
-            self.assertEqual(d.tolist(), batches[index:index+s_len].T.tolist())
-            self.assertEqual(t.tolist(), batches[index+s_len].tolist())
-            index += s_len
+                                   sequence_length=s_len, epoch=epoch,
+                                   sequencial=False):
+            #print("{} => {}".format(d.reshape((b_len, -1)), t.reshape((b_len, -1))))
+            self.assertEqual(d.tolist(), batches[index:index+s_len_i].T.tolist())
+            self.assertEqual(t.tolist(), batches[index+s_len_i].tolist())
+            s_len_i += 1
+            if s_len_i > s_len:
+                s_len_i = 1
+                index += s_len
+            if index + s_len >= len(batches):
+                index = 0
+                s_len_i = 1
 
 
 if __name__ == "__main__":
