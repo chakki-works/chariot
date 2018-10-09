@@ -36,7 +36,7 @@ class TestLanguageModelFeeder(unittest.TestCase):
             self.assertEqual(d.shape, (s_len, b_len))
             self.assertEqual(t.shape, (s_len, b_len))
 
-    def test_feed_content_seq(self):
+    def test_feed_sequential(self):
         feeder = LanguageModelFeeder({"sentence": ct.formatter.ShiftGenerator()})
         content = np.arange(20).reshape(1, -1)
         data = {"sentence": content}
@@ -52,53 +52,33 @@ class TestLanguageModelFeeder(unittest.TestCase):
             self.assertEqual(t.tolist(), batches[index+1:index+1+s_len].tolist())
             index += s_len
 
-    def test_feed_content(self):
+    def test_feed_batch(self):
         feeder = LanguageModelFeeder({"sentence": ct.formatter.ShiftGenerator()})
-        content = np.arange(120).reshape(1, -1)
+        content = np.arange(122).reshape(1, -1)
         data = {"sentence": content}
 
         # Iterate
         b_len = 2
         s_len = 6
         batches = content.reshape((b_len, -1)).T
-        """
-        batches will be
-       [[ 0 10]
-        [ 1 11]
-        [ 2 12]
-        [ 3 13]
-        [ 4 14]
-        ...
 
-        if seq = 3,
-       [[ 0 10]
-        [ 1 11]
-        [ 2 12]]
-
-        [ 3 13]
-        
-        to feed the model, transpose above.
-        [[0 1 2]
-         [10 11 12]]
-        [3,
-         13]
-        """
         index = 0
-        s_len_i = 1
         epoch = 3
-        for d, t in feeder.iterate(data, batch_size=b_len,
-                                   sequence_length=s_len, epoch=epoch,
-                                   sequencial=False):
-            #print("{} => {}".format(d.reshape((b_len, -1)), t.reshape((b_len, -1))))
-            self.assertEqual(d.tolist(), batches[index:index+s_len_i].T.tolist())
-            self.assertEqual(t.tolist(), batches[index+s_len_i].tolist())
-            s_len_i += 1
-            if s_len_i > s_len:
-                s_len_i = 1
-                index += s_len
+        epoch_count = 1
+        for d, t, done in feeder.iterate(data, batch_size=b_len,
+                                         sequence_length=s_len, epoch=epoch,
+                                         sequencial=False, output_epoch_end=True):
+
+            self.assertEqual(d.tolist(), batches[index:index+s_len].T.tolist())
+            self.assertEqual(t.tolist(), batches[index+1:index+s_len+1].T.tolist())
+
+            index += s_len
             if index + s_len >= len(batches):
                 index = 0
-                s_len_i = 1
+            if done:
+                epoch_count += 1
+
+        self.assertEqual(epoch_count, epoch)
 
 
 if __name__ == "__main__":

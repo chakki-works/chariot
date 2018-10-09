@@ -130,52 +130,43 @@ class LanguageModelFeeder(BaseProcessor):
         self._resource = self._resource[:limit].reshape((batch_size, -1)).T
 
     def make_generator(self, data, batch_size, sequence_length, epoch=-1,
-                       sequencial=True):
+                       sequencial=True, output_epoch_end=False):
 
         self.set_resource(data, batch_size)
         steps_per_epoch = (len(self._resource) - 1) // sequence_length
-        if not sequencial:
-            steps_per_epoch = steps_per_epoch * len(range(2, sequence_length))
 
         _generator = self.spec[self.key]
 
         def generator():
             count = 0
             _epoch = 0
-            count_limit = (len(self._resource) - 1) // sequence_length
             while True:
-                index = count * sequence_length
-                for length in range(1, sequence_length + 1):
-                    data, target = _generator.generate(self._resource, index, length)
-                    yield data.T, target[-1].T
-
-                count += 1
-                if count % count_limit == 0:
+                done = False
+                if count > 0 and count % steps_per_epoch == 0:
+                    done = True
                     _epoch += 1
                     count = 0
                     if epoch > 0 and _epoch >= epoch:
                         break
 
-        def seq_generator():
-            count = 0
-            _epoch = 0
-            while True:
                 index = count * sequence_length
-                data, target = _generator.generate(self._resource, index, sequence_length)
+                data, target = _generator.generate(self._resource, index,
+                                                   sequence_length)
+                if sequencial:
+                    batch = [data, target]
+                else:
+                    batch = [data.T, target.T]
+                if output_epoch_end:
+                    batch += [done]
+
                 count += 1
-                if count % steps_per_epoch == 0:
-                    _epoch += 1
-                    count = 0
-                    if epoch > 0 and _epoch >= epoch:
-                        break
+                yield batch
 
-                yield data, target
-
-        return steps_per_epoch, seq_generator if sequencial else generator
+        return steps_per_epoch, generator
 
     def iterate(self, data, batch_size, sequence_length, epoch=-1,
-                sequencial=True):
+                sequencial=True, output_epoch_end=False):
         _, generator = self.make_generator(data, batch_size, sequence_length,
-                                           epoch, sequencial)
-        for d, t in generator():
-            yield d, t
+                                           epoch, sequencial, output_epoch_end)
+        for batch in generator():
+            yield batch
