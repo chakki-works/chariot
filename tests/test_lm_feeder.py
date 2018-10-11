@@ -11,6 +11,7 @@ A chariot is a type of carriage driven by a charioteer, usually using horses[a] 
 The word "chariot" comes from the Latin term carrus, a loanword from Gaulish. A chariot of war or one used in military parades was called a car. In ancient Rome and some other ancient Mediterranean civilizations, a biga required two horses, a triga three, and a quadriga four.
 """
 
+
 class TestLanguageModelFeeder(unittest.TestCase):
 
     def _make_corpus(self):
@@ -79,6 +80,18 @@ class TestLanguageModelFeeder(unittest.TestCase):
                 epoch_count += 1
 
         self.assertEqual(epoch_count, epoch)
+
+    def test_feed_batch_stochastic(self):
+        feeder = LanguageModelFeeder({"sentence": ct.formatter.ShiftGenerator()})
+        content = np.arange(1001).reshape(1, -1)
+        data = {"sentence": content}
+
+        b_len = 5
+        s_len = 20
+        for d, t in feeder.iterate(data, batch_size=b_len,
+                                   sequence_length=s_len, epoch=3,
+                                   sequencial=False, stochastic=True):
+            self.assertEqual(d.shape, t.shape)
 
 
 if __name__ == "__main__":

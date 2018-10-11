@@ -130,7 +130,7 @@ class LanguageModelFeeder(BaseProcessor):
         self._resource = self._resource[:limit].reshape((batch_size, -1)).T
 
     def make_generator(self, data, batch_size, sequence_length, epoch=-1,
-                       sequencial=True, output_epoch_end=False):
+                       sequencial=True, stochastic=False, output_epoch_end=False):
 
         self.set_resource(data, batch_size)
         steps_per_epoch = (len(self._resource) - 1) // sequence_length
@@ -140,18 +140,25 @@ class LanguageModelFeeder(BaseProcessor):
         def generator():
             count = 0
             _epoch = 0
+            index = 0
             while True:
                 done = False
                 if count > 0 and count % steps_per_epoch == 0:
                     done = True
                     _epoch += 1
                     count = 0
+                    index = 0
                     if epoch > 0 and _epoch >= epoch:
                         break
 
-                index = count * sequence_length
+                if not stochastic:
+                    _sequence_length = sequence_length
+                else:
+                    _sequence_length = np.random.randint(2, sequence_length,
+                                                         size=1)[0]
+
                 data, target = _generator.generate(self._resource, index,
-                                                   sequence_length)
+                                                   _sequence_length)
                 if sequencial:
                     batch = [data, target]
                 else:
@@ -160,13 +167,16 @@ class LanguageModelFeeder(BaseProcessor):
                     batch += [done]
 
                 count += 1
+                index = index + _sequence_length
+
                 yield batch
 
         return steps_per_epoch, generator
 
     def iterate(self, data, batch_size, sequence_length, epoch=-1,
-                sequencial=True, output_epoch_end=False):
+                sequencial=True, stochastic=False, output_epoch_end=False):
         _, generator = self.make_generator(data, batch_size, sequence_length,
-                                           epoch, sequencial, output_epoch_end)
+                                           epoch, sequencial, stochastic,
+                                           output_epoch_end)
         for batch in generator():
             yield batch
