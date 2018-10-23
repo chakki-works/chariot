@@ -162,7 +162,9 @@ class LanguageModelFeeder(BaseProcessor):
                 if sequencial:
                     batch = [data, target]
                 else:
-                    batch = [data.T, target.T]
+                    # to (batch x sequence x word_id) shape
+                    _target = np.expand_dims(target.T, axis=-1)
+                    batch = [data.T, _target]
                 if output_epoch_end:
                     batch += [done]
 

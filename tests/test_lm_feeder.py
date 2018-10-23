@@ -71,7 +71,8 @@ class TestLanguageModelFeeder(unittest.TestCase):
                                          sequencial=False, output_epoch_end=True):
 
             self.assertEqual(d.tolist(), batches[index:index+s_len].T.tolist())
-            self.assertEqual(t.tolist(), batches[index+1:index+s_len+1].T.tolist())
+            self.assertEqual(t.squeeze().tolist(),
+                             batches[index+1:index+s_len+1].T.tolist())
 
             index += s_len
             if index + s_len >= len(batches):
@@ -91,7 +92,7 @@ class TestLanguageModelFeeder(unittest.TestCase):
         for d, t in feeder.iterate(data, batch_size=b_len,
                                    sequence_length=s_len, epoch=3,
                                    sequencial=False, stochastic=True):
-            self.assertEqual(d.shape, t.shape)
+            self.assertEqual(d.shape, t.squeeze().shape)
 
 
 if __name__ == "__main__":
