@@ -61,7 +61,6 @@ class Vocabulary(BasePreprocessor):
 
         reserved = [r for r in reserved if r not in vocab]
         if self.ignore_blank:
-            print(vocab)
             vocab = [v for v in vocab if v.strip()]
         vocab = reserved + vocab
         self._vocab = vocab
