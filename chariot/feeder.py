@@ -37,7 +37,7 @@ class Feeder(BaseProcessor):
         return keys
 
     def transform(self, data=None, ignores=(), n_jobs=-1, inverse=False):
-        _data = data if data else self._resource
+        _data = data if data is not None else self._resource
         tasks = []
         for k in self.spec:
             if k not in ignores:
@@ -58,7 +58,7 @@ class Feeder(BaseProcessor):
 
     def make_generator(self, data, batch_size, epoch=-1, n_jobs=-1,
                        ignores=()):
-        _data = data if data else self._resource
+        _data = data if data is not None else self._resource
         data_length = len(_data)
         steps_per_epoch = data_length // batch_size
         keys = self._get_keys(_data, ignores)
