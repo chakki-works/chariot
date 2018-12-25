@@ -3,8 +3,6 @@ import copy
 import numpy as np
 from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.base import BaseEstimator, TransformerMixin
-from chariot.transformer.text.base import TextFilter, TextNormalizer
-from chariot.transformer.token.base import TokenFilter, TokenNormalizer
 from chariot.transformer.vocabulary import Vocabulary
 from chariot.transformer.tokenizer import Tokenizer
 
@@ -40,8 +38,10 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
             transformers
         )
 
+    """
     @_transformers.setter
     def _transformers(self, value):
+        print("XXXXXXXXXXXXXXXXX")
         for name, t in value:
             if isinstance(t, (TextFilter, TextNormalizer)):
                 self.text_transformers.append(t)
@@ -58,6 +58,7 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
     def set_params(self, **kwargs):
         self._set_params("_transformers", **kwargs)
         return self
+    """
 
     def _validate_transformers(self):
         names, transformers = zip(*self._transformers)

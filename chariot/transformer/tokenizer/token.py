@@ -24,6 +24,8 @@ class Token():
             return self._token.text
         elif self.token_type == "ja":
             return self._token.surface
+        else:
+            return self._token
 
     @property
     def base_form(self):
@@ -31,20 +33,28 @@ class Token():
             return self._token.lemma_
         elif self.token_type == "ja":
             return self._token.base_form
+        else:
+            return "-"
 
     @property
     def pos(self):
         if self.token_type == "spaCy":
             return self._token.pos_
         elif self.token_type == "ja":
-            return self._token.part_of_speech[0]
+            pos = self._token.part_of_speech.split(",")[0]
+            return pos
+        else:
+            return "-"
 
     @property
     def tag(self):
         if self.token_type == "spaCy":
             return self._token.tag_
         elif self.token_type == "ja":
-            return self._token.part_of_speech[1]
+            tag = self._token.part_of_speech.split(",")[1]
+            return tag
+        else:
+            return "-"
 
     def __repr__(self):
         return "<{}:{}>".format(self.surface, self.pos)

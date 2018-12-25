@@ -21,6 +21,10 @@ class MeCabTokenizer():
             if node.surface:
                 surface = node.surface
                 features = node.feature.split(",")
+                if len(features) < 9:
+                    pad_size = 9 - len(features)
+                    features += ["*"] * pad_size
+
                 token = MeCabTokenizer.JanomeToken(
                             surface, ",".join(features[:4]),
                             features[4], features[5],

@@ -32,7 +32,7 @@ class Preprocess(BaseProcessor):
                 input_output_process.append((input, input, process))
         return input_output_process
 
-    def apply(self, dataframe, n_jobs=-1, as_dataframe=False):
+    def transform(self, dataframe, n_jobs=-1, as_dataframe=False):
         tasks = self._make_tasks(self.spec)
         _targets = list(self.spec.keys())
 

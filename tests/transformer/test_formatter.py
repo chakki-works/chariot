@@ -6,7 +6,7 @@ import chariot.transformer.formatter as fmt
 class TestFormatter(unittest.TestCase):
 
     def test_categorical_label(self):
-        formatter = fmt.CategoricalLabel(class_count=5)
+        formatter = fmt.CategoricalLabel(num_class=5)
         column = np.array([1, 3, 2])
         categorical = formatter.transform(column)
         for i, n in enumerate(column):

@@ -23,7 +23,7 @@ class TestFeeder(unittest.TestCase):
                             token_transformers=[ct.token.StopwordFilter("en")],
                             vocabulary=ct.Vocabulary(min_df=0, max_df=1.0))
 
-        preprocessor.fit(df[["review", "comment"]])
+        preprocessor.fit(df.loc[:, ["review", "comment"]])
 
         # Build preprocess
         prep = Preprocess({
@@ -32,18 +32,18 @@ class TestFeeder(unittest.TestCase):
         })
 
         # Apply preprocessed
-        preprocessed = prep.apply(df)
+        preprocessed = prep.transform(df)
 
         # Feed
         feeder = Feeder({"label": ct.formatter.CategoricalLabel.from_(preprocessor),
                          "review": ct.formatter.Padding.from_(preprocessor, length=5)})
 
-        adjusted = feeder.apply(preprocessed, ignore=("comment"))
+        adjusted = feeder.transform(preprocessed, ignores=("comment"))
         self.assertEqual(len(adjusted["label"][0]),
                          len(preprocessor.vocabulary._vocab))
 
         # Iterate
-        for batch in feeder.iterate(preprocessed, batch_size=1, epoch=1, ignore=("comment")):
+        for batch in feeder.iterate(preprocessed, batch_size=1, epoch=1, ignores=("comment")):
             self.assertEqual(len(batch), 2)
             self.assertEqual(len(batch["review"][0]), 5)
 

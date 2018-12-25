@@ -27,6 +27,20 @@ class Storage():
         """
         self.root = root
 
+    @classmethod
+    def setup_data_dir(cls, path):
+        if not os.path.exists(path):
+            raise Exception("{} does not exist".format(path))
+
+        root = Path(path)
+        data_root = root.joinpath("data")
+        data_root.mkdir(exist_ok=True)
+        for _dir in ["raw", "external", "interim", "processed"]:
+            data_root.joinpath(_dir).mkdir(exist_ok=True)
+
+        storage = cls(path)
+        return storage
+
     def data_path(self, target=""):
         return os.path.join(self.root, "data/{}".format(target))
 
@@ -53,6 +67,9 @@ class Storage():
             chakin.search(lang)
         elif number > -1 or name:
             path = self.data_path("external")
+            if not os.path.exists(path):
+                os.mkdir(path)
+
             table = chakin.downloader.load_datasets()
 
             index = number
@@ -84,10 +101,12 @@ class Storage():
             raise Exception("You have to specify lang to search or "
                             "number/name to download")
 
+    """
     def _to_snake(self, name):
         _name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
         _name = re.sub("([a-z0-9])([A-Z])", r"\1_\2", _name).lower()
         return _name
+    """
 
     def expand(self, path, ext):
         location = Path(os.path.dirname(path))
@@ -110,4 +129,4 @@ class Storage():
                 with ZipFile(path) as zip:
                     zip.extractall(location)
 
-            return location
+            return dir_path

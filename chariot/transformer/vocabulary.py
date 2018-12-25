@@ -2,6 +2,7 @@ from collections import Counter
 import numbers
 from chariot.util import apply_map
 from chariot.transformer.base_preprocessor import BasePreprocessor
+from chariot.transformer.tokenizer.token import Token
 from chariot.resource.word_vector import WordVector
 
 
@@ -10,7 +11,8 @@ class Vocabulary(BasePreprocessor):
     def __init__(self, padding="@@PADDING@@", unknown="@@UNKNOWN@@",
                  begin_of_sequence="@@BEGIN_OF_SEQUENCE@@",
                  end_of_sequence="@@END_OF_SEQUENCE@@",
-                 max_df=1.0, min_df=1, limit=-1, copy=True):
+                 max_df=1.0, min_df=1, vocab_size=-1, ignore_blank=True,
+                 copy=True):
         super().__init__(copy)
         self._vocab = []
         self._padding = padding
@@ -19,19 +21,19 @@ class Vocabulary(BasePreprocessor):
         self._end_of_sequence = end_of_sequence
         self.max_df = max_df
         self.min_df = min_df
-        self.limit = limit
+        self.vocab_size = vocab_size
+        self.ignore_blank = ignore_blank
 
         if max_df < 0 or min_df < 0:
             raise ValueError("Negative value for max_df or min_df")
 
     @classmethod
     def from_file(cls, path, padding="@@PADDING@@", unknown="@@UNKNOWN@@",
-                  begin_of_sequence="@@BEGIN_OF_SEQUENCE@@",
-                  end_of_sequence="@@END_OF_SEQUENCE@@",
-                  max_df=1.0, min_df=1, limit=-1, copy=True):
+                  begin_of_sequence="", end_of_sequence="",
+                  max_df=1.0, min_df=1, vocab_size=-1, ignore_blank=True, copy=True):
 
         instance = cls(padding, unknown, begin_of_sequence, end_of_sequence,
-                       max_df, min_df, limit, copy)
+                       max_df, min_df, vocab_size, ignore_blank, copy)
 
         with open(path, encoding="utf-8") as f:
             words = f.readlines()
@@ -45,14 +47,22 @@ class Vocabulary(BasePreprocessor):
         reserved = [r for r in reserved if r]
 
         if isinstance(list_or_file, (list, tuple)):
-            vocab = reserved + list(list_or_file)
+            def get_surface(token):
+                if isinstance(token, Token):
+                    return token.surface
+                else:
+                    return token
+            vocab = [get_surface(t) for t in list_or_file]
         else:
             with open(list_or_file, encoding="utf-8") as f:
                 words = f.readlines()
                 words = [w.strip() for w in words]
-            reserved = [r for r in reserved if r not in words]
-            vocab = reserved + words
+            vocab = words
 
+        reserved = [r for r in reserved if r not in vocab]
+        if self.ignore_blank:
+            vocab = [v for v in vocab if v.strip()]
+        vocab = reserved + vocab
         self._vocab = vocab
 
     def get(self):
@@ -118,18 +128,21 @@ class Vocabulary(BasePreprocessor):
             length = len(list(X.values)[0])
 
         def update_vocab(element):
-            vocab.update(self.token_to_words(element))
+            words = self.token_to_words(element)
+            if self.ignore_blank:
+                words = [w for w in words if w.strip()]
+            vocab.update(words)
 
         apply_map(X, update_vocab)
 
         reserved = [self._padding, self._unknown,
                     self._begin_of_sequence, self._end_of_sequence]
-        reserved = [r for r in reserved if r]
+        reserved = [r for r in reserved if r]  # filter no setting token
 
-        selected = reserved
-        if self.limit > 0:
-            for term, limit in vocab.most_common():
-                if len(selected) < self.limit:
+        selected = []
+        if self.vocab_size > 0:
+            for term, count in vocab.most_common():
+                if len(selected) < self.vocab_size:
                     selected.append(term)
                 else:
                     break
@@ -141,13 +154,15 @@ class Vocabulary(BasePreprocessor):
                          if isinstance(self.max_df, numbers.Integral)
                          else self.max_df * length)
 
-            for term, limit in vocab.most_common():
-                if limit <= min_limit or limit >= max_limit:
+            for term, count in vocab.most_common():
+                if count < min_limit or count > max_limit:
                     continue
                 else:
                     selected.append(term)
 
-        self._vocab = selected
+        reserved = [r for r in reserved if r not in selected]
+        self._vocab = reserved + selected
+        return self
 
     def make_embedding(self, word_vector_path,
                        encoding="utf-8", progress=False):
