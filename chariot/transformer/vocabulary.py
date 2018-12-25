@@ -152,5 +152,5 @@ class Vocabulary(BasePreprocessor):
     def make_embedding(self, word_vector_path,
                        encoding="utf-8", progress=False):
         wv = WordVector(word_vector_path, encoding)
-        embedding = wv.load(self._vocab, progress=progress)
+        embedding = wv.load_embedding(self._vocab, progress=progress)
         return embedding

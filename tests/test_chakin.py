@@ -4,6 +4,7 @@ import gzip
 import unittest
 from unittest import mock
 from chariot.storage import Storage
+from chariot.resource.word_vector import WordVector
 from chariot.transformer.vocabulary import Vocabulary
 
 
@@ -47,6 +48,12 @@ class TestChakin(unittest.TestCase):
         word2vec_file = Path(storage.data_path("external/word2vec_dummy.txt"))
         with word2vec_file.open(mode="w", encoding="utf-8") as f:
             f.write("\n".join(word2vec))
+
+        wv = WordVector(word2vec_file)
+        key_vector = wv.load()
+        for k in key_vector:
+            self.assertTrue(k in vocab.get())
+            self.assertEqual(len(key_vector[k]), vector_size)
 
         embed = vocab.make_embedding(word2vec_file)
         self.assertEqual(embed.shape, (len(vocab.get()), vector_size))
