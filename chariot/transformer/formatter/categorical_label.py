@@ -9,13 +9,12 @@ class CategoricalLabel(BaseFormatter):
         super().__init__()
         self.num_class = num_class
 
-    @classmethod
-    def from_(cls, vocabulary_or_preprocessor):
+    def transfer_setting(self, vocabulary_or_preprocessor):
         vocabulary = vocabulary_or_preprocessor
         if isinstance(vocabulary_or_preprocessor, Preprocessor):
             vocabulary = vocabulary_or_preprocessor.vocabulary
 
-        return CategoricalLabel(vocabulary.count)
+        self.num_class = vocabulary.count
 
     def transform(self, column):
         y = np.array(column, dtype="int")

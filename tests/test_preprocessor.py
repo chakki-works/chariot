@@ -6,7 +6,7 @@ import chariot.transformer as ct
 from chariot.preprocessor import Preprocessor
 
 
-class TestPreprocessors(unittest.TestCase):
+class TestPreprocessor(unittest.TestCase):
 
     def test_dataframe(self):
         path = os.path.join(os.path.dirname(__file__), "./")
