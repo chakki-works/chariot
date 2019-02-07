@@ -3,6 +3,8 @@ import copy
 import numpy as np
 from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.base import BaseEstimator, TransformerMixin
+from chariot.transformer.text.base import TextNormalizer, TextFilter
+from chariot.transformer.token.base import TokenFilter, TokenNormalizer
 from chariot.transformer.vocabulary import Vocabulary
 from chariot.transformer.tokenizer import Tokenizer
 
@@ -11,13 +13,28 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
 
     def __init__(self, tokenizer=None,
                  text_transformers=(), token_transformers=(),
-                 vocabulary=None):
+                 vocabulary=None, other_transformers=()):
         self.tokenizer = tokenizer
         if isinstance(self.tokenizer, str):
             self.tokenizer = Tokenizer(self.tokenizer)
-        self.text_transformers = text_transformers
-        self.token_transformers = token_transformers
+        self.text_transformers = list(text_transformers)
+        self.token_transformers = list(token_transformers)
         self.vocabulary = vocabulary
+        self.other_transformers = list(other_transformers)
+
+    def append(self, transformer):
+        if isinstance(transformer, Tokenizer):
+            self.tokenizer = transformer
+        elif isinstance(transformer, (TextNormalizer, TextFilter)):
+            self.text_transformers.append(transformer)
+        elif isinstance(transformer, (TokenFilter, TokenNormalizer)):
+            self.token_transformers.append(transformer)
+        elif isinstance(transformer, Vocabulary):
+            self.vocabulary = transformer
+        elif isinstance(transformer, (BaseEstimator, TransformerMixin)):
+            self.other_transformers.append(transformer)
+        else:
+            raise Exception("Can't append transformer to the Preprocessor")
 
     def _to_snake(self, name):
         _name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
@@ -32,33 +49,12 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
         transformers += self.token_transformers
         if self.vocabulary:
             transformers += [self.vocabulary]
+        transformers += self.other_transformers
 
         return (
-            (self._to_snake(t.__class__.__name__) + "_", t) for t in
-            transformers
+            (self._to_snake(t.__class__.__name__) + "_at_{}".format(i), t)
+            for i, t in enumerate(transformers)
         )
-
-    """
-    @_transformers.setter
-    def _transformers(self, value):
-        print("XXXXXXXXXXXXXXXXX")
-        for name, t in value:
-            if isinstance(t, (TextFilter, TextNormalizer)):
-                self.text_transformers.append(t)
-            elif isinstance(t, (TokenFilter, TokenNormalizer)):
-                self.token_transformers.append(t)
-            elif isinstance(t, Tokenizer):
-                self.tokenizer = t
-            elif isinstance(t, Vocabulary):
-                self.vocabulary = t
-
-    def get_params(self, deep=True):
-        return self._get_params("_transformers", deep=deep)
-
-    def set_params(self, **kwargs):
-        self._set_params("_transformers", **kwargs)
-        return self
-    """
 
     def _validate_transformers(self):
         names, transformers = zip(*self._transformers)

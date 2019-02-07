@@ -1,8 +1,10 @@
 import os
 import shutil
 import json
+from ast import literal_eval
 from pathlib import Path
 import tarfile
+import numpy as np
 import pandas as pd
 from sklearn.externals import joblib
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -10,15 +12,18 @@ from joblib import Parallel, delayed
 
 
 def _apply(data, target, process, inverse=False):
-    input_data = data[target]
-    if isinstance(input_data, pd.Series):
-        input_data = input_data.values.reshape((-1, 1))
+    if isinstance(data, pd.Series):
+        _data = data.values.reshape((-1, 1))
+    elif isinstance(data, np.ndarray) and len(data.shape) < 2:
+        _data = data.reshape((-1, 1))
+    else:
+        _data = data
 
     if not inverse:
-        transformed = process.transform(input_data)
+        transformed = process.transform(_data)
     else:
         if hasattr(process, "inverse_transform"):
-            transformed = process.inverse_transform(input_data)
+            transformed = process.inverse_transform(_data)
 
     return (target, transformed)
 
@@ -30,21 +35,29 @@ class BaseDatasetPreprocessor():
         if len(self.spec) == 0:
             self.spec = {}
 
-    def transform(self, spec, data=None, n_jobs=-1,
+    def transform(self, spec, data=None, n_jobs=1,
                   inverse=False, as_dataframe=False):
         tasks = []
+        keys = []
+        if isinstance(data, pd.DataFrame):
+            keys = data.columns.tolist()
+        else:
+            keys = list(data.keys())
 
         for k in spec:
+            from_, to_ = k
             if spec[k] is not None:
-                tasks.append((k, spec[k]))
+                tasks.append((from_, to_, spec[k]))
+            if from_ in keys:
+                keys.remove(from_)
 
         transformed = Parallel(n_jobs=n_jobs)(
-            delayed(_apply)(data, t, p, inverse) for t, p in tasks)
+            delayed(_apply)(data[s], t, p, inverse) for s, t, p in tasks)
         transformed = dict(transformed)
 
-        for key in self.spec:
-            if key not in transformed and key not in spec:
-                transformed[key] = data[key]
+        for k in keys:
+            if k not in transformed:
+                transformed[k] = data[k]
 
         if not as_dataframe:
             return transformed
@@ -55,17 +68,27 @@ class BaseDatasetPreprocessor():
     @classmethod
     def _apply_func(cls, d, criteria, func, path=()):
         applied = {}
-        _path = list(path)
         for k in d:
-            _path.append(k)
+            p = list(path) + [k]
             if isinstance(d[k], dict):
-                applied[k] = cls._apply_func(d[k], criteria, func, _path)
+                applied[k] = cls._apply_func(d[k], criteria, func, p)
             elif criteria(d[k]):
-                applied[k] = func(d[k], _path)
+                applied[k] = func(d[k], p)
             else:
                 applied[k] = d[k]
 
         return applied
+
+    @classmethod
+    def _make_file_name(cls, path):
+        file_name = ""
+        for p in path:
+            if isinstance(p, tuple):
+                file_name += "-".join(p)
+            else:
+                file_name += "_" + p
+        file_name += ".pkl"
+        return file_name
 
     def save(self, path):
         basename = os.path.basename(path).split(".")[0]
@@ -79,12 +102,13 @@ class BaseDatasetPreprocessor():
                 return False
 
         def func(item, path):
-            file_name = "_".join(path) + ".pkl"
+            file_name = self._make_file_name(path)
             joblib.dump(item, root.joinpath(file_name))
             return file_name
 
         spec = self._apply_func(self.spec, criteria, func)
         with root.joinpath("spec.json").open(mode="w", encoding="utf-8") as f:
+            spec = {str(k): v for k, v in spec.items()}
             json.dump(spec, f)
 
         with tarfile.open(path, "w:gz") as tar:
@@ -99,6 +123,7 @@ class BaseDatasetPreprocessor():
         with tarfile.open(path, "r:gz") as tar:
             spec_f = tar.extractfile(basename + "/spec.json")
             spec = json.load(spec_f)
+            spec = {literal_eval(k): v for k, v in spec.items()}
 
             def criteria(item):
                 if isinstance(item, str) and item.endswith(".pkl"):
@@ -107,7 +132,7 @@ class BaseDatasetPreprocessor():
                     return False
 
             def func(item, path):
-                file_name = "_".join(path) + ".pkl"
+                file_name = cls._make_file_name(path)
                 file_name = basename + "/" + file_name
                 p = joblib.load(tar.extractfile(file_name))
                 return p

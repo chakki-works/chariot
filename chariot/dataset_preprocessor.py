@@ -1,30 +1,61 @@
 import numpy as np
 import pandas as pd
 from chariot.transformer.formatter.base import BaseFormatter
+from chariot.preprocessor import Preprocessor
 from chariot.base_dataset_preprocessor import BaseDatasetPreprocessor
 
 
-class FieldSpecSetter():
+class ProcessBuilder():
 
     def __init__(self, dp, name):
         self.dp = dp
-        self.name = name
-        if name not in self.dp.spec:
-            self.dp.spec[name] = {}
+        self.key = (name, name)
+        if self.key not in self.dp.spec:
+            self.dp.spec[self.key] = {}
 
-    def bind(self, processor):
-        if isinstance(processor, BaseFormatter):
-            self.dp.spec[self.name]["formatter"] \
-                = self.__transfer_setting(processor)
+    @property
+    def preprocessor(self):
+        if "preprocessor" in self.dp.spec[self.key]:
+            return self.dp.spec[self.key]["preprocessor"]
         else:
-            self.dp.spec[self.name]["preprocessor"] = processor
+            return None
+
+    @property
+    def formatter(self):
+        if "formatter" in self.dp.spec[self.key]:
+            return self.dp.spec[self.key]["formatter"]
+        else:
+            return None
+
+    def fit(self, X, y=None):
+        if self.preprocessor is not None:
+            self.preprocessor.fit(X, y)
+            if self.formatter is not None:
+                f = self._convey(self.formatter)
+                self.dp.spec[self.key]["formatter"] = f
         return self
 
-    def __transfer_setting(self, formatter):
-        if "preprocessor" in self.dp.spec[self.name] and\
-           hasattr(formatter, "transfer_setting"):
-            p = self.dp.spec[self.name]["preprocessor"]        
-            formatter.transfer_setting(p)
+    def by(self, processor, reference=None):
+        if isinstance(processor, BaseFormatter):
+            p = None if reference is None else reference.preprocessor
+            self.dp.spec[self.key]["formatter"] = self._convey(processor, p)
+        else:
+            if self.preprocessor is None:
+                self.dp.spec[self.key]["preprocessor"] = Preprocessor()
+            self.dp.spec[self.key]["preprocessor"].append(processor)
+
+        return self
+
+    def as_name(self, to_name):
+        new_key = (self.key[0], to_name)
+        self.dp.spec[new_key] = self.dp.spec.pop(self.key)
+        self.key = new_key
+        return ProcessBuilder(self.dp, to_name)
+
+    def _convey(self, formatter, preprocessor=None):
+        _p = preprocessor if preprocessor is not None else self.preprocessor
+        if _p is not None and hasattr(formatter, "transfer_setting"):
+            formatter.transfer_setting(_p)
         return formatter
 
 
@@ -32,10 +63,15 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
 
     def __init__(self, spec=()):
         super().__init__(spec)
-        self.__preprocessed = None
+        self.__processed = None
+        self.__formatted = False
 
-    def field(self, name):
-        return FieldSpecSetter(self, name)
+    @property
+    def processed(self):
+        return self.__processed
+
+    def process(self, name):
+        return ProcessBuilder(self, name)
 
     def get_spec(self, kind):
         spec = {}
@@ -45,32 +81,40 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
 
         return spec
 
-    def preprocess(self, data, n_jobs=-1, inverse=False, as_dataframe=False):
+    def __call__(self, data):
+        self.__processed = data
+        self.__formatted = False
+        return self
+
+    def preprocess(self, data=None, n_jobs=1, inverse=False,
+                   as_dataframe=False):
         spec = self.get_spec("preprocessor")
-        transformed = self.transform(spec, data, n_jobs, inverse,
-                                     as_dataframe)
-        self.__preprocessed = transformed
-        return transformed
+        _data = data if data is not None else self.__processed
+        _data = self.transform(spec, _data, n_jobs, inverse, as_dataframe)
 
-    def preprocessed(self, data):
-        self.__preprocessed = data
+        if data is None:
+            self.__processed = _data
+            return self
+        else:
+            return _data
 
-    def format(self, data=None, n_jobs=-1, inverse=False, as_dataframe=False):
+    def format(self, data=None, n_jobs=1, inverse=False,
+               as_dataframe=False):
         spec = self.get_spec("formatter")
         _data = data if data is not None else self._processed
-        transformed = self.transform(spec, _data, n_jobs, inverse,
-                                     as_dataframe)
+        _data = self.transform(spec, _data, n_jobs, inverse, as_dataframe)
 
-        return transformed
+        if data is None:
+            self.__processed = _data
+            self.__formatted = True
+            return self
+        else:
+            return _data
 
-    def iterator(self, data, batch_size=32, epoch=1, n_jobs=-1,
+    def iterator(self, data=None, batch_size=32, epoch=1, n_jobs=1,
                  output_epoch_end=False):
 
-        if self.__preprocessed is not None:
-            _data = self.__preprocessed
-        else:
-            _data = self.preprocess(data, n_jobs=n_jobs)
-
+        _data = data if data is not None else self._processed
         data_length = len(_data)
         steps_per_epoch = data_length // batch_size
 
@@ -101,14 +145,15 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
                             batch[key] = _data[key][selected]
 
                 count += 1
-                batch = self.format(batch, n_jobs=n_jobs)
+                if not self.__formatted:
+                    batch = self.format(batch, n_jobs=n_jobs)
                 if output_epoch_end:
                     batch = [batch, done]
                 yield batch
 
         return steps_per_epoch, generator
 
-    def iterate(self, data, batch_size=32, epoch=1, n_jobs=-1,
+    def iterate(self, data, batch_size=32, epoch=1, n_jobs=1,
                 output_epoch_end=False):
         _, iterator = self.iterator(data, batch_size, epoch, n_jobs,
                                     output_epoch_end)

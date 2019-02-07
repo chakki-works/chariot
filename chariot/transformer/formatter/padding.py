@@ -24,7 +24,7 @@ class Padding(BaseFormatter):
         self.padding = vocabulary.pad
         if self.begin_of_sequence:
             self._begin_of_sequence = vocabulary.bos
-        if self.end_of_sequenceuence:
+        if self.end_of_sequence:
             self._end_of_sequence = vocabulary.eos
 
     def transform(self, column):

@@ -107,3 +107,4 @@ tests/data/external/
 tests/data/raw/
 notebooks/data/
 notebooks/models/
+.DS_Store
