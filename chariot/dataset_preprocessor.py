@@ -101,7 +101,7 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
     def format(self, data=None, n_jobs=1, inverse=False,
                as_dataframe=False):
         spec = self.get_spec("formatter")
-        _data = data if data is not None else self._processed
+        _data = data if data is not None else self.__processed
         _data = self.transform(spec, _data, n_jobs, inverse, as_dataframe)
 
         if data is None:
@@ -111,10 +111,15 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
         else:
             return _data
 
+    def inverse(self, data, n_jobs=1, as_dataframe=False):
+        _data = self.format(data, n_jobs, True, as_dataframe)
+        _data = self.preprocess(_data, n_jobs, True, as_dataframe)
+        return _data
+
     def iterator(self, data=None, batch_size=32, epoch=1, n_jobs=1,
                  output_epoch_end=False):
 
-        _data = data if data is not None else self._processed
+        _data = data if data is not None else self.__processed
         data_length = len(_data)
         steps_per_epoch = data_length // batch_size
 
@@ -138,7 +143,7 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
                     batch = _data.iloc[selected, :]
                 else:
                     batch = {}
-                    for key in self.spec:
+                    for key in _data:
                         if isinstance(_data[key], pd.Series):
                             batch[key] = _data[key].iloc[selected]
                         else:
@@ -153,7 +158,7 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
 
         return steps_per_epoch, generator
 
-    def iterate(self, data, batch_size=32, epoch=1, n_jobs=1,
+    def iterate(self, data=None, batch_size=32, epoch=1, n_jobs=1,
                 output_epoch_end=False):
         _, iterator = self.iterator(data, batch_size, epoch, n_jobs,
                                     output_epoch_end)

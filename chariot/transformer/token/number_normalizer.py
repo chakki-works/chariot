@@ -15,7 +15,7 @@ class NumberNormalizer(TokenNormalizer):
                     t.set_surface(self.digit_character)
                     is_number = True
             elif t.is_ja:
-                print(t.pos, t.tag)
+                # print(t.pos, t.tag)
                 if (t.pos == "名詞" and t.tag == "数"):
                     t.set_surface(self.digit_character)
                     is_number = True

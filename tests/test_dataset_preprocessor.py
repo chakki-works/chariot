@@ -91,17 +91,15 @@ class TestDatasetPreprocessor(unittest.TestCase):
             .by(ct.formatter.CategoricalLabel(),
                 reference=dp.process("review"))
 
-        adjusted = dp(df).preprocess().format()
+        adjusted = dp(df).preprocess().format().processed
         self.assertEqual(len(adjusted["label"][0]),
-                         len(dp.process("review").preprocessor.vocabulary.count))
+                         dp.process("review").preprocessor.vocabulary.count)
 
         # Iterate
         for batch in dp(df).preprocess().iterate(batch_size=1, epoch=1):
-            self.assertEqual(len(batch), 2)
+            self.assertEqual(len(batch), 3)
             self.assertEqual(len(batch["review"][0]), 5)
 
-            """
-            inversed = dp.inverse_transform(batch)
+            inversed = dp.inverse(batch)
             self.assertEqual(inversed["label"][0], np.argmax(batch["label"]))
             self.assertLessEqual(len(inversed["review"][0]), 5)
-            """

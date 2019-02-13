@@ -13,12 +13,13 @@ class CategoricalLabel(BaseFormatter):
         vocabulary = vocabulary_or_preprocessor
         if isinstance(vocabulary_or_preprocessor, Preprocessor):
             vocabulary = vocabulary_or_preprocessor.vocabulary
-
         self.num_class = vocabulary.count
 
     def transform(self, column):
         y = np.array(column, dtype="int")
         input_shape = y.shape
+        if input_shape and input_shape[-1] == 1 and len(input_shape) > 1:
+            input_shape = tuple(input_shape[:-1])
         y = y.ravel()
         n = y.shape[0]
         categorical = np.zeros((n, self.num_class), dtype=np.float32)

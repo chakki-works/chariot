@@ -24,6 +24,17 @@ def apply_map(data, func, inplace=False):
         else:
             result = pd.Series(list(map(func, data.values)))
             return result
+    elif isinstance(data, np.ndarray):
+        def _apply_map(x):
+            return apply_map(x, func, inplace=inplace)
+
+        if len(data.shape) > 1:
+            result = np.apply_along_axis(_apply_map, -1, data)
+            return result
+        else:
+            _data = pd.Series(data)
+            return apply_map(_data, func, inplace=inplace)
+
     elif isinstance(data, dict):
         result = data if inplace else {}
         for k in list(data.keys()):
@@ -31,22 +42,8 @@ def apply_map(data, func, inplace=False):
         return result
     elif isinstance(data, (list, tuple)):
         result = data if inplace else ([0] * len(data))
-
-        # 2d array
-        if len(data) > 0 and isinstance(data[0], (list, tuple)):
-            data_dim = len(np.array(data[0]).shape)
-            for i, row in enumerate(data):
-                if data_dim == 1:
-                    result[i] = func(row)
-                else:
-                    # row has multiple column
-                    _row = []
-                    for column in row:
-                        _row.append(func(column))
-                    result[i] = _row
-        else:
-            for i, e in enumerate(data):
-                result[i] = func(e)
+        for i, row in enumerate(data):
+            result[i] = func(row)
         return result
     else:
         return func(data)

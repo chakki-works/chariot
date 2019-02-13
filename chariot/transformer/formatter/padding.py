@@ -29,19 +29,23 @@ class Padding(BaseFormatter):
 
     def transform(self, column):
         def adjust(sequence, length):
+            sq = sequence
+            if len(sq) == 1 and isinstance(sq[0], (list, tuple)):
+                sq = sq[0]
+
             if self.begin_of_sequence:
-                sequence = [self._begin_of_sequence] + sequence
+                sq = [self._begin_of_sequence] + sq
             if self.end_of_sequence > 0:
-                sequence = sequence + [self._end_of_sequence]
+                sq = sq + [self._end_of_sequence]
 
             if self.length > 0:
-                if len(sequence) < self.length:
-                    pad_size = self.length - len(sequence)
-                    sequence = sequence + [self.padding] * pad_size
-                elif len(sequence) > self.length:
-                    sequence = sequence[:length]
+                if len(sq) < self.length:
+                    pad_size = self.length - len(sq)
+                    sq = sq + [self.padding] * pad_size
+                elif len(sq) > self.length:
+                    sq = sq[:length]
 
-            return np.array(sequence)
+            return np.array(sq)
 
         length = self.length
         if length < 0:
@@ -62,4 +66,4 @@ class Padding(BaseFormatter):
         if isinstance(column, pd.Series):
             return column.apply(lambda x: inverse(x))
         else:
-            return np.array([inverse(x) for x in column])
+            return [inverse(x) for x in column]
