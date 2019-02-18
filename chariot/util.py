@@ -43,7 +43,12 @@ def apply_map(data, func, inplace=False):
     elif isinstance(data, (list, tuple)):
         result = data if inplace else ([0] * len(data))
         for i, row in enumerate(data):
-            result[i] = func(row)
+            if isinstance(row, (tuple, list)) and len(row) > 0\
+                 and isinstance(row[0], (tuple, list)):
+                # multi-column list
+                result[i] = [func(c) for c in row]
+            else:
+                result[i] = func(row)
         return result
     else:
         return func(data)

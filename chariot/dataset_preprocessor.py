@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from chariot.transformer.formatter.base import BaseFormatter
+from chariot.transformer.generator.base import BaseGenerator
 from chariot.preprocessor import Preprocessor
 from chariot.base_dataset_preprocessor import BaseDatasetPreprocessor
 
@@ -36,7 +37,7 @@ class ProcessBuilder():
         return self
 
     def by(self, processor, reference=None):
-        if isinstance(processor, BaseFormatter):
+        if isinstance(processor, (BaseFormatter, BaseGenerator)):
             p = None if reference is None else reference.preprocessor
             self.dp.spec[self.key]["formatter"] = self._convey(processor, p)
         else:
@@ -63,12 +64,12 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
 
     def __init__(self, spec=()):
         super().__init__(spec)
-        self.__processed = None
-        self.__formatted = False
+        self._processed = None
+        self._formatted = False
 
     @property
     def processed(self):
-        return self.__processed
+        return self._processed
 
     def process(self, name):
         return ProcessBuilder(self, name)
@@ -82,18 +83,18 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
         return spec
 
     def __call__(self, data):
-        self.__processed = data
-        self.__formatted = False
+        self._processed = data
+        self._formatted = False
         return self
 
     def preprocess(self, data=None, n_jobs=1, inverse=False,
                    as_dataframe=False):
         spec = self.get_spec("preprocessor")
-        _data = data if data is not None else self.__processed
+        _data = data if data is not None else self._processed
         _data = self.transform(spec, _data, n_jobs, inverse, as_dataframe)
 
         if data is None:
-            self.__processed = _data
+            self._processed = _data
             return self
         else:
             return _data
@@ -101,12 +102,12 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
     def format(self, data=None, n_jobs=1, inverse=False,
                as_dataframe=False):
         spec = self.get_spec("formatter")
-        _data = data if data is not None else self.__processed
+        _data = data if data is not None else self._processed
         _data = self.transform(spec, _data, n_jobs, inverse, as_dataframe)
 
         if data is None:
-            self.__processed = _data
-            self.__formatted = True
+            self._processed = _data
+            self._formatted = True
             return self
         else:
             return _data
@@ -119,7 +120,7 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
     def iterator(self, data=None, batch_size=32, epoch=1, n_jobs=1,
                  output_epoch_end=False):
 
-        _data = data if data is not None else self.__processed
+        _data = data if data is not None else self._processed
         data_length = len(_data)
         steps_per_epoch = data_length // batch_size
 
@@ -150,7 +151,7 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
                             batch[key] = _data[key][selected]
 
                 count += 1
-                if not self.__formatted:
+                if not self._formatted:
                     batch = self.format(batch, n_jobs=n_jobs)
                 if output_epoch_end:
                     batch = [batch, done]

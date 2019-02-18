@@ -11,10 +11,20 @@ class Padding(BaseFormatter):
         super().__init__()
         self.padding = padding
         self.length = length
-        self.begin_of_sequence = begin_of_sequence
-        self._begin_of_sequence = -1
-        self.end_of_sequence = end_of_sequence
-        self._end_of_sequence = -1
+
+        if isinstance(begin_of_sequence, int):
+            self.begin_of_sequence = True
+            self._begin_of_sequence = begin_of_sequence
+        else:
+            self.begin_of_sequence = begin_of_sequence
+            self._begin_of_sequence = -1
+
+        if isinstance(end_of_sequence, int):
+            self.end_of_sequence = True
+            self._end_of_sequence = end_of_sequence
+        else:
+            self.bend_of_sequence = end_of_sequence
+            self._end_of_sequence = -1
 
     def transfer_setting(self, vocabulary_or_preprocessor):
         vocabulary = vocabulary_or_preprocessor

@@ -10,18 +10,37 @@ from chariot.transformer.generator.target_generator import TargetGenerator
 
 class LanguageModelProcessBuilder(ProcessBuilder):
 
-    def __init__(self, dp, from_name, to_name=""):
-        super().__init__(dp, from_name, to_name)
+    def __init__(self, dp, name):
+        super().__init__(dp, name)
 
-    def by(self, processor):
-        if isinstance(processor, BaseFormatter):
-            self.dp.spec[self.key]["formatter"] \
-                = self.__transfer_setting(processor)
-        elif isinstance(processor, BaseGenerator):
+    def by(self, processor, reference=None):
+        if isinstance(processor, BaseGenerator):
             self.dp.generator[self.key] = processor
         else:
-            self.dp.spec[self.key]["preprocessor"] = processor
+            super().by(processor, reference)
         return self
+
+
+class SentenceToBatchTransformer(BaseFormatter):
+
+    def __init__(self, batch_size):
+        self.batch_size = batch_size
+
+    def transform(self, column):
+        sentences = column
+        if isinstance(column, pd.Series):
+            sentences = column.values
+        elif isinstance(column, (list, tuple)):
+            sentences = np.array(column)
+
+        if len(column.shape) > 1 and column.shape[1] == 1:
+            sentences = column.flatten()
+
+        adjusted = np.array(list(itertools.chain.from_iterable(sentences)))
+        limit = (len(adjusted) // self.batch_size) * self.batch_size
+        # None x batch_size matrix
+        adjusted = adjusted[:limit].reshape((self.batch_size, -1)).T
+        return adjusted
 
 
 class LanguageModelPreprocessor(DatasetPreprocessor):
@@ -30,20 +49,10 @@ class LanguageModelPreprocessor(DatasetPreprocessor):
         super().__init__(spec)
         self.generator = {}
 
-    def _adjust_data(self, data, batch_size):
-        sentences = data[self.key]
-        if isinstance(sentences, pd.Series):
-            sentences = sentences.values
-        elif isinstance(sentences, (list, tuple)):
-            sentences = np.array(sentences)
+    def process(self, name):
+        return LanguageModelProcessBuilder(self, name)
 
-        adjusted = np.array(list(itertools.chain.from_iterable(sentences)))
-        limit = (len(adjusted) // batch_size) * batch_size
-        # None x batch_size matrix
-        adjusted = adjusted[:limit].reshape((batch_size, -1)).T
-        return adjusted
-
-    def generate(self, data=None, index=0, sequence_length=12):
+    def generate(self, column, index=0, sequence_length=12):
         if len(self.generator) == 0:
             raise Exception("Language model should have at least one generator")
 
@@ -51,8 +60,7 @@ class LanguageModelPreprocessor(DatasetPreprocessor):
         for k in self.generator:
             from_field, to_field = k
             g = self.generator[k]
-            left, right = self.generator(data[from_field], index,
-                                         sequence_length)
+            left, right = g.generate(column, index, sequence_length)
 
             if isinstance(g, TargetGenerator):
                 generated_pairs.append((left, right))
@@ -66,8 +74,11 @@ class LanguageModelPreprocessor(DatasetPreprocessor):
                  n_jobs=1):
 
         _data = data if data is not None else self._processed
-        adjusted = self._adjust_data(_data, batch_size)
-        steps_per_epoch = (len(self._resource) - 1) // sequence_length
+        for key in self.generator:
+            _from, _to = key
+
+        batch_all = SentenceToBatchTransformer(batch_size).transform(_data[_from])
+        steps_per_epoch = (len(batch_all) - 1) // sequence_length
 
         def generator():
             count = 0
@@ -83,7 +94,7 @@ class LanguageModelPreprocessor(DatasetPreprocessor):
                     if epoch > 0 and _epoch >= epoch:
                         break
 
-                pairs = self.generate(adjusted, index, sequence_length)
+                pairs = self.generate(batch_all, index, sequence_length)
 
                 if sequencial:
                     batch = pairs
@@ -111,8 +122,8 @@ class LanguageModelPreprocessor(DatasetPreprocessor):
     def iterate(self, data=None, batch_size=32, sequence_length=12,
                 epoch=1, sequencial=True, output_epoch_end=False,
                 n_jobs=1):
-        _, generator = self.make_generator(data, batch_size, sequence_length,
-                                           epoch, sequencial, output_epoch_end,
-                                           n_jobs)
+        _, generator = self.iterator(data, batch_size, sequence_length,
+                                     epoch, sequencial, output_epoch_end,
+                                     n_jobs)
         for batch in generator():
             yield batch

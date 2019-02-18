@@ -14,4 +14,4 @@ class BasePreprocessor(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        return apply_map(X, self.apply, inplace=self.copy)
+        return apply_map(X, self.apply, inplace=(not self.copy))

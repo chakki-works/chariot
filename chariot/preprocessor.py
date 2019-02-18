@@ -76,10 +76,8 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
         self._validate_transformers()
         Xt = self.check_array(X, True)
         for name, t in self._transformers:
-            original_copy_setting = t.copy
-            t.copy = False  # Don't copy in each transformer
             Xt = t.transform(Xt)
-            t.copy = original_copy_setting
+
         return Xt
 
     def inverse_transform(self, X):
@@ -93,11 +91,19 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         self._validate_transformers()
         Xt = X
+        copied = False
         for name, t in self._transformers:
-            if isinstance(t, Vocabulary):
-                t.fit(Xt)
-            else:
-                Xt = t.fit_transform(Xt)
+            t.fit(Xt)
+            if not isinstance(t, Vocabulary):
+                original_copy_setting = t.copy
+                if not copied:
+                    # Do not transform original X
+                    t.copy = False
+                    copied = True
+                else:
+                    t.copy = False
+                Xt = t.transform(Xt)
+                t.copy = original_copy_setting
         return self
 
     def fit_transform(self, X, y=None):
