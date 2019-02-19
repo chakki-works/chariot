@@ -14,6 +14,7 @@ setup(
         "chariot.resource",
         "chariot.transformer",
         "chariot.transformer.formatter",
+        "chariot.transformer.generator",
         "chariot.transformer.text",
         "chariot.transformer.token",
         "chariot.transformer.tokenizer"

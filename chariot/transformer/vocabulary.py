@@ -74,19 +74,25 @@ class Vocabulary(BasePreprocessor):
 
     @property
     def unk(self):
-        return self._vocab.index(self._unknown)
+        return self.__return_index(self._unknown)
 
     @property
     def pad(self):
-        return self._vocab.index(self._padding)
+        return self.__return_index(self._padding)
 
     @property
     def bos(self):
-        return self._vocab.index(self._begin_of_sequence)
+        return self.__return_index(self._begin_of_sequence)
 
     @property
     def eos(self):
-        return self._vocab.index(self._end_of_sequence)
+        return self.__return_index(self._end_of_sequence)
+
+    def __return_index(self, word):
+        if word in self._vocab:
+            return self._vocab.index(word)
+        else:
+            return -1
 
     def token_to_words(self, tokens):
         words = [t if isinstance(t, str) else t.surface for t in tokens]

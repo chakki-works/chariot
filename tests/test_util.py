@@ -30,8 +30,8 @@ class TestUtil(unittest.TestCase):
         array_series = pd.Series(array_dict["column1"])
 
         value_list = [1, 2, 3, 4, 5]
-        array_list = [[0, 1], [2, 3], [4, 5]]
-        multi_array_list = [[[3, 1], [2, 3]], [[4, 5], [4, 5]]]
+        array_list = [[0, 1], [2, 3, 2], [4, 5, 1]]
+        multi_array_list = [[[3, 1], [2, 3, 1]], [[4, 5], [4, 5]]]
 
         test_dict = {
             "value": [df, series, value_dict, value_list, None],
@@ -44,7 +44,7 @@ class TestUtil(unittest.TestCase):
             if k == "value":
                 func = lambda x: x * 2
             else:
-                func = lambda x: [e + 2 for e in x]
+                func = lambda x: sum(x)
 
             for _k, d in zip(kinds, test_dict[k]):
                 if d is None:
@@ -55,31 +55,29 @@ class TestUtil(unittest.TestCase):
                 if inplace:
                     result = _d
                 if _k == "DataFrame":
+                    print(result)
                     self.assertEqual(tuple(self.flatten(result)),
-                                     tuple(func(self.flatten(d))))
+                                     tuple(map(func, self.flatten(d))))
                 elif _k == "Series":
                     self.assertEqual(tuple(self.flatten(result)),
-                                     tuple(func(self.flatten(d))))
+                                     tuple(map(func, self.flatten(d))))
                 elif _k == "dict":
                     for kx in result:
                         self.assertEqual(tuple(self.flatten(result[kx])),
-                                         tuple(func(self.flatten(d[kx]))))
+                                         tuple(map(func, self.flatten(d[kx]))))
                 elif _k == "list":
+                    print("{} => {}".format(d, result))
                     self.assertEqual(tuple(self.flatten(result)),
-                                     tuple(func(self.flatten(d))))
+                                     tuple(map(func, self.flatten(d))))
 
     def flatten(self, object):
+        f = object
         if isinstance(object, (pd.DataFrame, pd.Series)):
             f = object.values.reshape(-1)
         else:
             f = np.array(object).reshape(-1)
-        if not isinstance(f[0], list):
-            return f
-        else:
-            s = []
-            for x in f:
-                s += x
-            return np.array(s)
+
+        return f
 
 
 if __name__ == "__main__":

@@ -9,17 +9,17 @@ class CategoricalLabel(BaseFormatter):
         super().__init__()
         self.num_class = num_class
 
-    @classmethod
-    def from_(cls, vocabulary_or_preprocessor):
+    def transfer_setting(self, vocabulary_or_preprocessor):
         vocabulary = vocabulary_or_preprocessor
         if isinstance(vocabulary_or_preprocessor, Preprocessor):
             vocabulary = vocabulary_or_preprocessor.vocabulary
-
-        return CategoricalLabel(vocabulary.count)
+        self.num_class = vocabulary.count
 
     def transform(self, column):
         y = np.array(column, dtype="int")
         input_shape = y.shape
+        if input_shape and input_shape[-1] == 1 and len(input_shape) > 1:
+            input_shape = tuple(input_shape[:-1])
         y = y.ravel()
         n = y.shape[0]
         categorical = np.zeros((n, self.num_class), dtype=np.float32)

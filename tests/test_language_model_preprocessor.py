@@ -2,8 +2,7 @@ import unittest
 import numpy as np
 import pandas as pd
 import chariot.transformer as ct
-from chariot.preprocessor import Preprocessor
-from chariot.feeder import LanguageModelFeeder
+from chariot.language_model_preprocessor import LanguageModelPreprocessor
 
 
 TEXT = """
@@ -12,51 +11,56 @@ The word "chariot" comes from the Latin term carrus, a loanword from Gaulish. A 
 """
 
 
-class TestLanguageModelFeeder(unittest.TestCase):
+class TestLanguageModelPreprocessor(unittest.TestCase):
 
     def _make_corpus(self):
         return pd.DataFrame.from_dict({"sentence": [TEXT]})
 
     def test_feed(self):
         df = self._make_corpus()
-        # Make preprocessor
-        preprocessor = Preprocessor(
-                            tokenizer=ct.Tokenizer("en"),
-                            text_transformers=[ct.text.UnicodeNormalizer()],
-                            token_transformers=[ct.token.StopwordFilter("en")],
-                            vocabulary=ct.Vocabulary(vocab_size=30))
+        dp = LanguageModelPreprocessor()
 
-        preprocessed = preprocessor.fit_transform(df)
-        feeder = LanguageModelFeeder({"sentence": ct.formatter.ShiftGenerator()})
+        dp.process("sentence")\
+          .by(ct.text.UnicodeNormalizer())\
+          .by(ct.Tokenizer("en"))\
+          .by(ct.token.StopwordFilter("en"))\
+          .by(ct.Vocabulary(vocab_size=30))\
+          .by(ct.generator.ShiftedTarget())\
+          .fit(df)
 
         # Iterate
         b_len = 2
         s_len = 6
-        for d, t in feeder.iterate(preprocessed, batch_size=b_len,
-                                   sequence_length=s_len, epoch=2):
+        for d, t in dp(df).preprocess().iterate(batch_size=b_len,
+                                                sequence_length=s_len,
+                                                epoch=2):
             self.assertEqual(d.shape, (s_len, b_len))
             self.assertEqual(t.shape, (s_len, b_len))
 
     def test_feed_sequential(self):
-        feeder = LanguageModelFeeder({"sentence": ct.formatter.ShiftGenerator()})
         content = np.arange(20).reshape(1, -1)
         data = {"sentence": content}
+        dp = LanguageModelPreprocessor()
+
+        dp.process("sentence").by(ct.generator.ShiftedTarget())
 
         # Iterate
         b_len = 2
         s_len = 3
         batches = content.reshape((b_len, -1)).T
         index = 0
-        for d, t in feeder.iterate(data, batch_size=b_len,
-                                   sequence_length=s_len, epoch=1):
+        for d, t in dp.iterate(data, batch_size=b_len,
+                               sequence_length=s_len, epoch=1):
             self.assertEqual(d.tolist(), batches[index:index+s_len].tolist())
             self.assertEqual(t.tolist(), batches[index+1:index+1+s_len].tolist())
             index += s_len
 
     def test_feed_batch(self):
-        feeder = LanguageModelFeeder({"sentence": ct.formatter.ShiftGenerator()})
         content = np.arange(122).reshape(1, -1)
         data = {"sentence": content}
+
+        dp = LanguageModelPreprocessor()
+        dp.process("sentence").by(ct.generator.ShiftedTarget())
 
         # Iterate
         b_len = 2
@@ -66,9 +70,9 @@ class TestLanguageModelFeeder(unittest.TestCase):
         index = 0
         epoch = 3
         epoch_count = 1
-        for d, t, done in feeder.iterate(data, batch_size=b_len,
-                                         sequence_length=s_len, epoch=epoch,
-                                         sequencial=False, output_epoch_end=True):
+        for d, t, done in dp.iterate(data, batch_size=b_len,
+                                     sequence_length=s_len, epoch=epoch,
+                                     sequencial=False, output_epoch_end=True):
 
             self.assertEqual(d.tolist(), batches[index:index+s_len].T.tolist())
             self.assertEqual(t.squeeze().tolist(),
@@ -81,18 +85,6 @@ class TestLanguageModelFeeder(unittest.TestCase):
                 epoch_count += 1
 
         self.assertEqual(epoch_count, epoch)
-
-    def test_feed_batch_stochastic(self):
-        feeder = LanguageModelFeeder({"sentence": ct.formatter.ShiftGenerator()})
-        content = np.arange(1001).reshape(1, -1)
-        data = {"sentence": content}
-
-        b_len = 5
-        s_len = 20
-        for d, t in feeder.iterate(data, batch_size=b_len,
-                                   sequence_length=s_len, epoch=3,
-                                   sequencial=False, stochastic=True):
-            self.assertEqual(d.shape, t.squeeze().shape)
 
 
 if __name__ == "__main__":
