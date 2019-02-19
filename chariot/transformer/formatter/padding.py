@@ -7,24 +7,24 @@ from chariot.preprocessor import Preprocessor
 class Padding(BaseFormatter):
 
     def __init__(self, padding=0, length=-1,
-                 begin_of_sequence=False, end_of_sequence=False):
+                 begin_of_sequence=False, end_of_sequence=False,
+                 begin_of_sequence_index=-1, end_of_sequence_index=-1):
         super().__init__()
         self.padding = padding
         self.length = length
 
-        if type(begin_of_sequence) == bool:
-            self.begin_of_sequence = begin_of_sequence
-            self._begin_of_sequence = -1
-        else:
-            self.begin_of_sequence = True
-            self._begin_of_sequence = begin_of_sequence
+        self.begin_of_sequence = begin_of_sequence
+        self.end_of_sequence = end_of_sequence
+        self._begin_of_sequence = begin_of_sequence_index
+        self._end_of_sequence = end_of_sequence_index
 
-        if type(end_of_sequence) == bool:
-            self.end_of_sequence = end_of_sequence
-            self._end_of_sequence = -1
-        else:
+        if type(self.begin_of_sequence) != bool:
+            self._begin_of_sequence = self.begin_of_sequence
+            self.begin_of_sequence = True
+
+        if type(self.end_of_sequence) != bool:
+            self._end_of_sequence = self.end_of_sequence
             self.end_of_sequence = True
-            self._end_of_sequence = end_of_sequence
 
     def transfer_setting(self, vocabulary_or_preprocessor):
         vocabulary = vocabulary_or_preprocessor
@@ -58,7 +58,8 @@ class Padding(BaseFormatter):
             length = max([len(seq) for seq in column])
 
         if isinstance(column, pd.Series):
-            return column.apply(lambda x: adjust(x, length))
+            applied = column.apply(lambda x: adjust(x, length)).tolist()
+            return np.array(applied)
         else:
             return np.array([adjust(x, length) for x in column])
 
@@ -73,3 +74,8 @@ class Padding(BaseFormatter):
             return column.apply(lambda x: inverse(x))
         else:
             return [inverse(x) for x in column]
+
+    def __reduce_ex__(self, proto):
+        return type(self), (self.padding, self.length,
+                            self.begin_of_sequence, self.end_of_sequence,
+                            self._begin_of_sequence, self._end_of_sequence)

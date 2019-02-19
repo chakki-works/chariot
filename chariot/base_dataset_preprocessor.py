@@ -91,6 +91,8 @@ class BaseDatasetPreprocessor():
         return file_name
 
     def save(self, path):
+        if os.path.exists(path):
+            os.remove(path)
         basename = os.path.basename(path).split(".")[0]
         root = Path(os.path.dirname(path)).joinpath(basename)
         root.mkdir()

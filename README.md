@@ -30,8 +30,6 @@ pip install chariot
 
 You can download various dataset by using [chazutsu](https://github.com/chakki-works/chazutsu).  
 
-![1_prepare_dataset.PNG](./docs/images/1_prepare_dataset.PNG)
-
 ```py
 import chazutsu
 from chariot.storage import Storage
@@ -65,8 +63,6 @@ Project root
 ```
 
 ## Build & Run Preprocess
-
-![2_build_and_run.PNG](./docs/images/2_build_and_run.PNG)
 
 ### Build a preprocess pipeline
 
@@ -110,44 +106,34 @@ There is 5 type of transformers for preprocessors.
 * Vocabulary
   * Make vocabulary and convert tokens to indices.
 
-### Run preprocesses for each dataset column
+### Build a preprocess for dataset
 
-After you prepare the preprocessors, you can apply these to your data in parallel.
+When you want to make preprocess to each of your dataset column, you can use `DatasetPreprocessor`.
 
-```py
-from chariot.preprocess import Preprocess
+```
+from chariot.dataset_preprocessor import DatasetPreprocessor
+from chariot.transformer.formatter import Padding
 
 
-p = Preprocess({
-    "Category": label_encoder,
-    "Text": preprocessor
-})
+dp = DatasetPreprocessor()
+dp.process("review")\
+    .by(ct.text.UnicodeNormalizer())\
+    .by(ct.Tokenizer("en"))\
+    .by(ct.Tokenizer("en"))\
+    .by(ct.token.StopwordFilter("en"))\
+    .by(ct.Vocabulary(min_df=5, max_df=0.5))\
+    .by(Padding(length=pad_length))\
+    .fit(r.train_data()["review"])
+dp.process("polarity")\
+    .by(ct.formatter.CategoricalLabel(num_class=3))
 
-applied = p.apply(your_data)
+
+preprocessed = dp.preprocess(df)
 ```
 
-You can apply multiple preprocessors to one column.
-
-```py
-from chariot.preprocess import Preprocess
-
-
-p = Preprocess({
-    "Category": label_encoder,
-    "Text": {
-      extract_word_features,
-      extract_char_features,
-    }
-})
-```
-
-Of course, you can serialize and save `Preprocess` instance.
-
-## Format Batch
+## Train with chariot
 
 `chariot` supports feeding the data to your model.
-
-![3_format_batch.PNG](./docs/images/3_format_batch.PNG)
 
 ```py
 from chariot.feeder import Feeder

@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name="chariot",
-    version="0.4.9",
+    version="0.5.0",
     description="Deliver the ready-to-train data to your NLP model.",
     keywords=["machine learning", "nlp", "natural language processing"],
     author="icoxfog417",

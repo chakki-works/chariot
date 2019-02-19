@@ -43,7 +43,10 @@ class ProcessBuilder():
         else:
             if self.preprocessor is None:
                 self.dp.spec[self.key]["preprocessor"] = Preprocessor()
-            self.dp.spec[self.key]["preprocessor"].append(processor)
+            if isinstance(processor, Preprocessor):
+                self.dp.spec[self.key]["preprocessor"] = processor
+            else:
+                self.dp.spec[self.key]["preprocessor"].append(processor)
 
         return self
 
@@ -147,7 +150,6 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
                     for key in _data:
                         if isinstance(_data[key], pd.Series):
                             batch[key] = _data[key].iloc[selected]
-                            print(batch[key])
                             batch[key].reset_index(inplace=True, drop=True)
                         else:
                             batch[key] = _data[key][selected]
