@@ -12,7 +12,7 @@ from joblib import Parallel, delayed
 
 
 def _apply(data, target, process, inverse=False):
-    if isinstance(data, pd.Series):
+    if isinstance(data, pd.Series) and data.dtype != "object":
         _data = data.values.reshape((-1, 1))
     elif isinstance(data, np.ndarray) and len(data.shape) < 2:
         _data = data.reshape((-1, 1))

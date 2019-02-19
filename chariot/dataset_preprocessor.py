@@ -147,6 +147,8 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
                     for key in _data:
                         if isinstance(_data[key], pd.Series):
                             batch[key] = _data[key].iloc[selected]
+                            print(batch[key])
+                            batch[key].reset_index(inplace=True, drop=True)
                         else:
                             batch[key] = _data[key][selected]
 

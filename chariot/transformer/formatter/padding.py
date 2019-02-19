@@ -12,19 +12,19 @@ class Padding(BaseFormatter):
         self.padding = padding
         self.length = length
 
-        if isinstance(begin_of_sequence, int):
-            self.begin_of_sequence = True
-            self._begin_of_sequence = begin_of_sequence
-        else:
+        if type(begin_of_sequence) == bool:
             self.begin_of_sequence = begin_of_sequence
             self._begin_of_sequence = -1
+        else:
+            self.begin_of_sequence = True
+            self._begin_of_sequence = begin_of_sequence
 
-        if isinstance(end_of_sequence, int):
+        if type(end_of_sequence) == bool:
+            self.end_of_sequence = end_of_sequence
+            self._end_of_sequence = -1
+        else:
             self.end_of_sequence = True
             self._end_of_sequence = end_of_sequence
-        else:
-            self.bend_of_sequence = end_of_sequence
-            self._end_of_sequence = -1
 
     def transfer_setting(self, vocabulary_or_preprocessor):
         vocabulary = vocabulary_or_preprocessor
@@ -39,23 +39,19 @@ class Padding(BaseFormatter):
 
     def transform(self, column):
         def adjust(sequence, length):
-            sq = sequence
-            if len(sq) == 1 and isinstance(sq[0], (list, tuple)):
-                sq = sq[0]
-
             if self.begin_of_sequence:
-                sq = [self._begin_of_sequence] + sq
-            if self.end_of_sequence > 0:
-                sq = sq + [self._end_of_sequence]
+                sequence = [self._begin_of_sequence] + sequence
+            if self.end_of_sequence:
+                sequence = sequence + [self._end_of_sequence]
 
-            if self.length > 0:
-                if len(sq) < self.length:
-                    pad_size = self.length - len(sq)
-                    sq = sq + [self.padding] * pad_size
-                elif len(sq) > self.length:
-                    sq = sq[:length]
+            if length > 0:
+                if len(sequence) < length:
+                    pad_size = length - len(sequence)
+                    sequence = sequence + [self.padding] * pad_size
+                elif len(sequence) > length:
+                    sequence = sequence[:length]
 
-            return np.array(sq)
+            return np.array(sequence)
 
         length = self.length
         if length < 0:
