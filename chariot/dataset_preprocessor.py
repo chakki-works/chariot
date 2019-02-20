@@ -120,7 +120,7 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
         _data = self.preprocess(_data, n_jobs, True, as_dataframe)
         return _data
 
-    def iterator(self, data=None, batch_size=32, epoch=1, n_jobs=1,
+    def iterator(self, data=None, batch_size=32, epoch=-1, n_jobs=1,
                  output_epoch_end=False):
 
         _data = data if data is not None else self._processed

@@ -69,8 +69,8 @@ class LanguageModelPreprocessor(DatasetPreprocessor):
 
         return generated_pairs
 
-    def iterator(self, data, batch_size=32, sequence_length=12,
-                 epoch=1, sequencial=True, output_epoch_end=False,
+    def iterator(self, data=None, batch_size=32, sequence_length=12,
+                 epoch=-1, sequencial=True, output_epoch_end=False,
                  n_jobs=1):
 
         _data = data if data is not None else self._processed
