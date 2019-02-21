@@ -8,7 +8,7 @@
         <meta name="author" content="chakki-works">
         
         <link rel="shortcut icon" href="../../img/favicon.ico">
-        <title>Work with your Model - chariot</title>
+        <title>Make preprocessor pipeline - chariot</title>
         
         <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
         <link href="../../css/font-awesome.min.css" rel="stylesheet">
@@ -62,15 +62,15 @@
 </li>
                                     
 <li >
-    <a href="../make_preprocessor/">Make preprocessors</a>
-</li>
-                                    
-<li >
-    <a href="../make_pipeline/">Make a preprocessor pipeline</a>
+    <a href="../make_preprocessor/">Make preprocessor</a>
 </li>
                                     
 <li class="active">
-    <a href="./">Work with your Model</a>
+    <a href="./">Make preprocessor pipeline</a>
+</li>
+                                    
+<li >
+    <a href="../train_model/">Train your model</a>
 </li>
                                     
 <li >
@@ -97,12 +97,12 @@
                             </a>
                         </li>
                             <li >
-                                <a rel="next" href="../make_pipeline/">
+                                <a rel="next" href="../make_preprocessor/">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li >
-                                <a rel="prev" href="../prepare_resources/">
+                                <a rel="prev" href="../train_model/">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -117,54 +117,68 @@
         <div class="container">
                 <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
     <ul class="nav bs-sidenav">
-        <li class="main active"><a href="#make-data-feeding-process">Make Data feeding process</a></li>
-        <li class="main "><a href="#save-and-load-a-feeder">Save and load a feeder</a></li>
+        <li class="main active"><a href="#define-a-pipeline">Define a Pipeline</a></li>
+        <li class="main "><a href="#make-pipeline-for-dataset">Make pipeline for dataset</a></li>
     </ul>
 </div></div>
                 <div class="col-md-9" role="main">
 
-<h2 id="title">Model Integration</h2>
+<h2 id="title">Make preprocessor pipeline</h2>
 
 <hr />
-<p>You have to arrange the data format to feed it to your model. It's known as padding, one-hot vectorize etc.
-Of course, <code>chariot</code> supports these feature.</p>
-<h3 id="make-data-feeding-process">Make Data feeding process</h3>
-<p><code>Feeder</code> enables it.</p>
+<p>You can combine each preprocessor to make pipeline process. As the name pipeline indicates, it just same as the <a href="http://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html">scikit-learn Pipeline</a>.</p>
+<h3 id="define-a-pipeline">Define a Pipeline</h3>
+<p>You can use <code>Preprocessor</code> to combine each preprocessors.</p>
 <pre><code class="py">import chariot.transformer as ct
+from chariot.preprocessor import Preprocessor
 
 
-preprocessed_data = {
-    &quot;label&quot;: [...],
-    &quot;review&quot;: [...]
-}
+preprocessor = Preprocessor()
+preprocessor\
+    .stack(ct.text.UnicodeNormalizer())\
+    .stack(ct.Tokenizer(&quot;en&quot;))\
+    .stack(ct.token.StopwordFilter(&quot;en&quot;))\
+    .stack(ct.Vocabulary(min_df=5, max_df=0.5))\
+    .fit(train_data)
 
-feeder = Feeder({&quot;label&quot;: ct.formatter.CategoricalLabel(num_class=5),
-                 &quot;review&quot;: ct.formatter.Padding.from_(padding=0, length=5)})
-adjusted = feeder.transform(preprocessed_data)
+preprocessed = preprocessor.transform(data)
 </code></pre>
 
-<p><code>Feeder</code> supports batch iteration.</p>
-<pre><code class="py">for batch in feeder.iterate(preprocessed_data, batch_size=32, epoch=10):
-    model.train_on_batch(batch[&quot;review&quot;], batch[&quot;label&quot;])
+<p>You can save &amp; load the <code>Preprocessor</code>.</p>
+<pre><code>preprocessor.save(&quot;my_preprocessor.pkl&quot;)
 
+loaded = Preprocessor.load(&quot;my_preprocessor.pkl&quot;)
 </code></pre>
 
-<p>If you have <code>preprocessor</code>, you can use it to define each <code>formatter</code>s.</p>
-<pre><code class="py">import chariot.transformer as ct
+<p>It means you can pack &amp; carry the preprocess by <code>.pkl</code> file.</p>
+<h3 id="make-pipeline-for-dataset">Make pipeline for dataset</h3>
+<p>When you want to apply distinctive preprocess for each column of a dataset, you can use <code>DatasetPreprocessor</code>.</p>
+<pre><code class="py">from chariot.dataset_preprocessor import DatasetPreprocessor
+from chariot.transformer.formatter import Padding
 
 
-feeder = Feeder({&quot;label&quot;: ct.formatter.CategoricalLabel.from_(preprocessor),
-                 &quot;review&quot;: ct.formatter.Padding.from_(preprocessor, length=5)})
+dp = DatasetPreprocessor()
+dp.process(&quot;review&quot;)\
+    .by(ct.text.UnicodeNormalizer())\
+    .by(ct.Tokenizer(&quot;en&quot;))\
+    .by(ct.token.StopwordFilter(&quot;en&quot;))\
+    .by(ct.Vocabulary(min_df=5, max_df=0.5))\
+    .by(Padding(length=pad_length))\
+    .fit(train_data[&quot;review&quot;])
+dp.process(&quot;polarity&quot;)\
+    .by(ct.formatter.CategoricalLabel(num_class=3))
+
+
+preprocessed = dp.preprocess(data)
 </code></pre>
 
-<h2 id="save-and-load-a-feeder">Save and load a feeder</h2>
-<p><code>Feeder</code> can bed saved to file like <code>preprocess</code>.</p>
-<pre><code class="py">feeder.save(&quot;/path/to/feeder.tar.gz&quot;)
-feeder = Feeder.load(&quot;/path/to/feeder.tar.gz&quot;)
+<p>You can save &amp; load <code>DatasetPreprocessor</code> as preprocessor.</p>
+<pre><code class="py">dp.save(&quot;my_dataset_preprocessor.tar.gz&quot;)
+loaded = DatasetPreprocessor.load(&quot;my_dataset_preprocessor.tar.gz&quot;)
 </code></pre>
 
-<p>Congratulations!</p>
-<p>You are ready to collaborate with <code>chariot</code>. Next is additional content to introduce <a href="../prepare_resources/">other convenient features of <code>chariot</code></a>.</p></div>
+<p>Why you preprocess the data? Of course you want to train your model!<br />
+Next <a href="../train_model/">feed data to your model</a>.</p></div>
         </div>
 
         <footer class="col-md-12">

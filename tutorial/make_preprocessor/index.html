@@ -8,7 +8,7 @@
         <meta name="author" content="chakki-works">
         
         <link rel="shortcut icon" href="../../img/favicon.ico">
-        <title>Make preprocessors - chariot</title>
+        <title>Make preprocessor - chariot</title>
         
         <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
         <link href="../../css/font-awesome.min.css" rel="stylesheet">
@@ -62,15 +62,15 @@
 </li>
                                     
 <li class="active">
-    <a href="./">Make preprocessors</a>
+    <a href="./">Make preprocessor</a>
 </li>
                                     
 <li >
-    <a href="../make_pipeline/">Make a preprocessor pipeline</a>
+    <a href="../make_preprocessor_pipeline/">Make preprocessor pipeline</a>
 </li>
                                     
 <li >
-    <a href="../model_integration/">Work with your Model</a>
+    <a href="../train_model/">Train your model</a>
 </li>
                                     
 <li >
@@ -102,7 +102,7 @@
                                 </a>
                             </li>
                             <li >
-                                <a rel="prev" href="../make_pipeline/">
+                                <a rel="prev" href="../make_preprocessor_pipeline/">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -122,20 +122,22 @@
         <li class="main "><a href="#token-preprocessor">Token preprocessor</a></li>
         <li class="main "><a href="#vocabulary">Vocabulary</a></li>
         <li class="main "><a href="#formatter">Formatter</a></li>
+        <li class="main "><a href="#generator">Generator</a></li>
     </ul>
 </div></div>
                 <div class="col-md-9" role="main">
 
-<h2 id="title">Make preprocessors</h2>
+<h2 id="title">Make preprocessor</h2>
 
 <hr />
-<p>There are 5 kinds of preprocessor in <code>chariot</code>.</p>
+<p>There are 6 kinds of preprocessor in <code>chariot</code>.</p>
 <ul>
 <li>Text reprocessor</li>
 <li>Tokenizer</li>
 <li>Token preprocessor</li>
 <li>Vocabulary</li>
 <li>Formatter</li>
+<li>Generator</li>
 </ul>
 <p>Each preprocessor is defined as <a href="http://scikit-learn.org/stable/modules/generated/sklearn.base.TransformerMixin.html">scikit-learn <code>Transformer</code></a>. Because of this, these preprocessors locate at <code>chariot.transformer</code>.</p>
 <p>You can initialize parameters of preprocessor by <code>fit</code>, and apply preprocess by <code>transform</code>.</p>
@@ -224,8 +226,23 @@ padded = formatter.transform(data)
    [1 2 3 4 5]]
 </code></pre>
 
-<p>Of Course you can use <code>Formatter</code> to batch data.</p>
-<p>Now you learned the role of each preprocessor. Then let's <a href="../make_pipeline/">make preprocessor pipeline by composing these</a>.</p></div>
+<h3 id="generator">Generator</h3>
+<p>The role of the <code>Generator</code> is generating the target / source data for your model.<br />
+For example, when you train the language model, your target data is shifted source data.</p>
+<pre><code class="py">import chariot.transformer as ct
+
+
+generator = ct.generator.ShiftedTarget(shift=1)
+source, target = generator.generate([1, 2, 3, 4, 5], index=0, length=3)
+</code></pre>
+
+<pre><code>&gt; source
+[1, 2, 3]
+&gt; target
+[2, 3, 4]
+</code></pre>
+
+<p>Now you learned the role of each preprocessor. Then let's <a href="../make_preprocessor_pipeline/">make preprocessor pipeline by composing these</a>.</p></div>
         </div>
 
         <footer class="col-md-12">

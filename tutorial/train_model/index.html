@@ -8,7 +8,7 @@
         <meta name="author" content="chakki-works">
         
         <link rel="shortcut icon" href="../../img/favicon.ico">
-        <title>Make a preprocessor pipeline - chariot</title>
+        <title>Train your model - chariot</title>
         
         <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
         <link href="../../css/font-awesome.min.css" rel="stylesheet">
@@ -62,15 +62,15 @@
 </li>
                                     
 <li >
-    <a href="../make_preprocessor/">Make preprocessors</a>
-</li>
-                                    
-<li class="active">
-    <a href="./">Make a preprocessor pipeline</a>
+    <a href="../make_preprocessor/">Make preprocessor</a>
 </li>
                                     
 <li >
-    <a href="../model_integration/">Work with your Model</a>
+    <a href="../make_preprocessor_pipeline/">Make preprocessor pipeline</a>
+</li>
+                                    
+<li class="active">
+    <a href="./">Train your model</a>
 </li>
                                     
 <li >
@@ -97,12 +97,12 @@
                             </a>
                         </li>
                             <li >
-                                <a rel="next" href="../make_preprocessor/">
+                                <a rel="next" href="../make_preprocessor_pipeline/">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li >
-                                <a rel="prev" href="../model_integration/">
+                                <a rel="prev" href="../prepare_resources/">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -117,62 +117,27 @@
         <div class="container">
                 <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
     <ul class="nav bs-sidenav">
-        <li class="main active"><a href="#define-a-pipeline">Define a Pipeline</a></li>
-        <li class="main "><a href="#save-and-load-a-pipeline">Save and load a pipeline</a></li>
-            <li><a href="#apply-individual-pipeline">Apply individual pipeline</a></li>
     </ul>
 </div></div>
                 <div class="col-md-9" role="main">
 
-<h2 id="title">Make a preprocessor pipeline</h2>
+<h2 id="title">Train your model</h2>
 
 <hr />
-<p>You can stack each preprocessor as preprocessor pipeline. As the name pipeline indicates, it just same as the <a href="http://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html">scikit-learn Pipeline</a>.</p>
-<h3 id="define-a-pipeline">Define a Pipeline</h3>
-<p>You can use <code>Preprocessor</code> to combine each preprocessors.</p>
-<pre><code class="py">import chariot.transformer as ct
-from chariot.preprocessor import Preprocessor
-
-
-preprocessor = Preprocessor(
-                    tokenizer=ct.Tokenizer(&quot;en&quot;),
-                    text_transformers=[ct.text.UnicodeNormalizer()],
-                    token_transformers=[ct.token.StopwordFilter(&quot;en&quot;)],
-                    vocabulary=ct.Vocabulary(min_df=3, max_df=1.0))
-
-preprocessed = preprocessor.fit_transform(text_document)
+<p>You can easily feed the preprocessed data to your model by <code>chariot</code>.</p>
+<pre><code class="py">for batch in dp(train_data.preprocess().iterate(batch_size=32, epoch=10):
+    model.train_on_batch(batch[&quot;review&quot;], batch[&quot;polarity&quot;])
 </code></pre>
 
-<h2 id="save-and-load-a-pipeline">Save and load a pipeline</h2>
-<p>You can save &amp; load the <code>Preprocessor</code>.</p>
-<pre><code>preprocessor.save(&quot;/path/to/preprocessor_name.pkl&quot;)
-preprocessor = Preprocess.load(&quot;/path/to/preprocessor_name.pkl&quot;)
+<p>If you want to preprocess/format all the data before training, you can do it like following.</p>
+<pre><code class="py">formatted = dp(train_data).preprocess().format().processed
+
+model.fit(formatted[&quot;review&quot;], formatted[&quot;polarity&quot;], batch_size=32,
+          validation_split=0.2, epochs=15, verbose=2)
 </code></pre>
 
-<p>It means you can deploy a serialized preprocessor and run it without its definition code!</p>
-<h3 id="apply-individual-pipeline">Apply individual pipeline</h3>
-<p>If you have multiple text column, you'll want to change preprocess column by column. <code>Preprocess</code> enables it.</p>
-<pre><code class="py">preprocess = Preprocess({
-                &quot;question&quot;: question_preprocessor,
-                &quot;document&quot;: document_preprocessor
-             })
-</code></pre>
-
-<p>Or apply multiple preprocessors to one column.</p>
-<pre><code class="py">preprocess = Preprocess({
-                &quot;document&quot;: {
-                    &quot;word&quot;: word_preprocessor,
-                    &quot;charactor&quot;: char_preprocessor
-                }
-             })
-</code></pre>
-
-<p>You can save &amp; load <code>Preprocess</code> as preprocessor.</p>
-<pre><code class="py">preprocess.save(&quot;/path/to/preprocess.tar.gz&quot;)
-preprocess = Preprocess.load(&quot;/path/to/preprocess.tar.gz&quot;
-</code></pre>
-
-<p>Now you prepare the data for your model. Then <a href="../model_integration/">feed it to your model</a>!</p></div>
+<p>Congratulations!</p>
+<p>You are ready to collaborate with <code>chariot</code>. Next is additional content to introduce <a href="../prepare_resources/">other convenient features of <code>chariot</code></a>.</p></div>
         </div>
 
         <footer class="col-md-12">
