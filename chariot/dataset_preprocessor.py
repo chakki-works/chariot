@@ -46,7 +46,7 @@ class ProcessBuilder():
             if isinstance(processor, Preprocessor):
                 self.dp.spec[self.key]["preprocessor"] = processor
             else:
-                self.dp.spec[self.key]["preprocessor"].append(processor)
+                self.dp.spec[self.key]["preprocessor"].stack(processor)
 
         return self
 

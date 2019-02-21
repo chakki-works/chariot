@@ -1,13 +1,14 @@
-<h2 id="title">Make preprocessors</h2>
+<h2 id="title">Make preprocessor</h2>
 ---
 
-There are 5 kinds of preprocessor in `chariot`.
+There are 6 kinds of preprocessor in `chariot`.
 
 * Text reprocessor
 * Tokenizer
 * Token preprocessor
 * Vocabulary
 * Formatter
+* Generator
 
 Each preprocessor is defined as [scikit-learn `Transformer`](http://scikit-learn.org/stable/modules/generated/sklearn.base.TransformerMixin.html). Because of this, these preprocessors locate at `chariot.transformer`.
 
@@ -122,7 +123,24 @@ padded = formatter.transform(data)
    [1 2 3 4 5]]
 ```
 
-Of Course you can use `Formatter` to batch data.
+### Generator
+
+The role of the `Generator` is generating the target / source data for your model.  
+For example, when you train the language model, your target data is shifted source data.
+
+```py
+import chariot.transformer as ct
 
 
-Now you learned the role of each preprocessor. Then let's [make preprocessor pipeline by composing these](./make_pipeline.md).
+generator = ct.generator.ShiftedTarget(shift=1)
+source, target = generator.generate([1, 2, 3, 4, 5], index=0, length=3)
+```
+
+```
+> source
+[1, 2, 3]
+> target
+[2, 3, 4]
+```
+
+Now you learned the role of each preprocessor. Then let's [make preprocessor pipeline by composing these](./make_preprocessor_pipeline.md).

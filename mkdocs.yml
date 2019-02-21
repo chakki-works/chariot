@@ -7,9 +7,9 @@ nav:
     - Home: index.md
     - Tutorial:
         - Installation: tutorial/install.md
-        - Make preprocessors: tutorial/make_preprocessor.md
-        - Make a preprocessor pipeline: tutorial/make_pipeline.md
-        - Work with your Model: tutorial/model_integration.md
+        - Make preprocessor: tutorial/make_preprocessor.md
+        - Make preprocessor pipeline: tutorial/make_preprocessor_pipeline.md
+        - Train your model: tutorial/train_model.md
         - Prepare NLP resources: tutorial/prepare_resources.md
         - Make custom preprocessors: tutorial/make_custom_preprocessor.md
     - Demo: https://github.com/chakki-works/chariot/blob/master/notebooks/movie_review_sentiment_analysis.ipynb

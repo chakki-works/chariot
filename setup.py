@@ -26,7 +26,7 @@ setup(
         "scikit-learn>=0.19.1",
         "spacy==1.9.0",
         "pandas>=0.23.1",
-        "chazutsu>=0.8.1",
+        "chazutsu>=0.8.2",
         "chakin>=0.0.6",
         "tqdm>=4.23.4"
     ],

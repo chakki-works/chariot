@@ -67,30 +67,28 @@ Project root
 ### Build a preprocess pipeline
 
 All preprocessors are defined at `chariot.transformer`.  
-Transformers are implemented following to the scikit-learn transformer manner.  Thanks to that, you can chain & save preprocessors easily.
-
+Transformers are implemented by extending [scikit-learn `Transformer`](https://scikit-learn.org/stable/modules/generated/sklearn.base.TransformerMixin.html).  
+Because of this, the API of Transformer is familiar to you. And you can mix [scikit-learn's preprocessors](https://scikit-learn.org/stable/modules/preprocessing.html).
 
 ```py
-from sklearn.externals import joblib
 import chariot.transformer as ct
 from chariot.preprocessor import Preprocessor
 
 
-preprocessor = Preprocessor(
-                  text_transformers=[ct.text.UnicodeNormalizer()],
-                  tokenizer=ct.Tokenizer("en"),
-                  token_transformers=[ct.token.StopwordFilter("en")],
-                  vocabulary=ct.Vocabulary())
+preprocessor = Preprocessor()
+preprocessor\
+    .stack(ct.text.UnicodeNormalizer())\
+    .stack(ct.Tokenizer("en"))\
+    .stack(ct.token.StopwordFilter("en"))\
+    .stack(ct.Vocabulary(min_df=5, max_df=0.5))\
+    .fit(train_data)
 
-preprocessor.fit(your_dataset)
-joblib.dump(preprocessor, "preprocessor.pkl")  # Save
+preprocessor.save("my_preprocessor.pkl")
 
-preprocessor = joblib.load("preprocessor.pkl")  # Load
+loaded = Preprocessor.load("my_preprocessor.pkl")
 ```
 
-It means you don't need the code of preprocessor when inference (prediction).
-
-There is 5 type of transformers for preprocessors.
+There is 6 type of transformers are prepared in chariot.
 
 * TextPreprocessor
   * Preprocess the text before tokenization.
@@ -105,12 +103,16 @@ There is 5 type of transformers for preprocessors.
   * `TokenFilter`: Filter tokens (extract only noun etc).
 * Vocabulary
   * Make vocabulary and convert tokens to indices.
+* Formatter
+  * Format (preprocessed) data for training your model.
+* Generator
+  * Genrate target data to train your (language) model.
 
 ### Build a preprocess for dataset
 
 When you want to make preprocess to each of your dataset column, you can use `DatasetPreprocessor`.
 
-```
+```py
 from chariot.dataset_preprocessor import DatasetPreprocessor
 from chariot.transformer.formatter import Padding
 
@@ -119,40 +121,42 @@ dp = DatasetPreprocessor()
 dp.process("review")\
     .by(ct.text.UnicodeNormalizer())\
     .by(ct.Tokenizer("en"))\
-    .by(ct.Tokenizer("en"))\
     .by(ct.token.StopwordFilter("en"))\
     .by(ct.Vocabulary(min_df=5, max_df=0.5))\
     .by(Padding(length=pad_length))\
-    .fit(r.train_data()["review"])
+    .fit(train_data["review"])
 dp.process("polarity")\
     .by(ct.formatter.CategoricalLabel(num_class=3))
 
 
-preprocessed = dp.preprocess(df)
+preprocessed = dp.preprocess(data)
+
+# DatasetPreprocessor has multiple preprocessor.
+# Because of this, save file format is `tar.gz`.
+dp.save("my_dataset_preprocessor.tar.gz")
+
+loaded = DatasetPreprocessor.load("my_dataset_preprocessor.tar.gz")
 ```
 
-## Train with chariot
+## Train your model with chariot
 
-`chariot` supports feeding the data to your model.
+`chariot` has feature to traing your model.
 
 ```py
-from chariot.feeder import Feeder
-from chariot.transformer.formatter import CategoricalLabel, Padding
+formatted = dp(train_data).preprocess().format().processed
 
-
-feeder = Feeder({"Category": CategoricalLabel.from_(preprocessor),
-                 "Text": Padding.from_(preprocessor, length=5)})
-
-# Full batch
-full_batch = feeder.apply(preprocessed)
-
-# Iterate batch
-for batch in feeder.iterate(preprocessed, batch_size=32, epoch=10):
-    model.train_on_batch(batch["Text"], batch["Category"])
+model.fit(formatted["review"], formatted["polarity"], batch_size=32,
+          validation_split=0.2, epochs=15, verbose=2)
 
 ```
 
-You can convert the word to vector by pre-trained word vectors by [chakin](https://github.com/chakki-works/chakin).  
+```py
+for batch in dp(train_data.preprocess().iterate(batch_size=32, epoch=10):
+    model.train_on_batch(batch["review"], batch["polarity"])
+
+```
+
+You can use pre-trained word vectors by [chakin](https://github.com/chakki-works/chakin).  
 
 
 ```py
@@ -169,7 +173,3 @@ vocab.set(["you", "loaded", "word", "vector", "now"])
 embed = vocab.make_embedding(storage.data_path("external/glove.6B.50d.txt"))
 print(embed.shape)  # (len(vocab.count), 50)
 ```
-
-Overall process is like following.
-
-![chariot_flow.png](./docs/images/chariot_flow.png)

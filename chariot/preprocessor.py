@@ -1,6 +1,7 @@
 import re
 import copy
 import numpy as np
+from sklearn.externals import joblib
 from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.base import BaseEstimator, TransformerMixin
 from chariot.transformer.text.base import TextNormalizer, TextFilter
@@ -22,7 +23,7 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
         self.vocabulary = vocabulary
         self.other_transformers = list(other_transformers)
 
-    def append(self, transformer):
+    def stack(self, transformer):
         if isinstance(transformer, Tokenizer):
             self.tokenizer = transformer
         elif isinstance(transformer, (TextNormalizer, TextFilter)):
@@ -35,6 +36,7 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
             self.other_transformers.append(transformer)
         else:
             raise Exception("Can't append transformer to the Preprocessor")
+        return self
 
     def _to_snake(self, name):
         _name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
@@ -121,3 +123,11 @@ class Preprocessor(_BaseComposition, BaseEstimator, TransformerMixin):
                 return np.array(X)
             else:
                 return copy.deepcopy(X)
+
+    def save(self, path):
+        joblib.dump(self, path)
+
+    @classmethod
+    def load(cls, path):
+        instance = joblib.load(path)
+        return instance

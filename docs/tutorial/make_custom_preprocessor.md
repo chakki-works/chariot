@@ -12,5 +12,6 @@ Following base classes are prepared to make custom preprocessor.
 * Token preprocessor: `TokenNormalizer` and `TokenFilter`
 * Vocabulary: -
 * Formatter: `BaseFormatter`
+* Generator: `SourceGenerator` and `TargetGenerator`
 
 All you have to do is implements `apply` or `transform` method for each base class.

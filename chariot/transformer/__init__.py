@@ -4,3 +4,4 @@ from .vocabulary import Vocabulary
 from .formatter.base import BaseFormatter
 from .text.base import BasePreprocessor
 from .token.base import BasePreprocessor
+from .generator.base import BaseGenerator
