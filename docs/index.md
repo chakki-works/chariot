@@ -14,7 +14,7 @@ Deliver the ready-to-train data to your NLP model.
     * Multi-language text tokenization is supported by [spaCy](https://spacy.io/).
 * Format Batch
     * Sampling a batch from preprocessed dataset and format it to train the model (padding etc).
-    * You can use pre-trained word vectors through the [chakin](https://github.com/chakki-works/chakin)
+    * You can use pre-trained word vectors through the [chakin](https://github.com/chakki-works/chakin).
 
 **chariot** enables you to concentrate on training your model!
 

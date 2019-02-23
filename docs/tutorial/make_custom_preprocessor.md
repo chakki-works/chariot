@@ -7,9 +7,9 @@ If prepared preprocessors are not enough to you, you can make custom preprocesso
 
 Following base classes are prepared to make custom preprocessor.
 
-* Text reprocessor: `TextNormalizer` and `TextFilter`
+* TextPreprocessor: `TextNormalizer` and `TextFilter`
 * Tokenizer: -
-* Token preprocessor: `TokenNormalizer` and `TokenFilter`
+* TokenPreprocessor: `TokenNormalizer` and `TokenFilter`
 * Vocabulary: -
 * Formatter: `BaseFormatter`
 * Generator: `SourceGenerator` and `TargetGenerator`

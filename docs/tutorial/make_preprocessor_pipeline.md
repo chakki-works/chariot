@@ -5,7 +5,7 @@ You can combine each preprocessor to make pipeline process. As the name pipeline
 
 ### Define a Pipeline
 
-You can use `Preprocessor` to combine each preprocessors.
+You can use `Preprocessor` to combine each preprocessor.
 
 ```py
 import chariot.transformer as ct
