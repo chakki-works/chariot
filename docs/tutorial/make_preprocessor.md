@@ -3,9 +3,9 @@
 
 There are 6 kinds of preprocessor in `chariot`.
 
-* Text reprocessor
+* TextPreprocessor
 * Tokenizer
-* Token preprocessor
+* TokenPreprocessor
 * Vocabulary
 * Formatter
 * Generator
@@ -47,7 +47,7 @@ tokens = ct.Tokenizer(lang="en").transform(text)
 ```
 
 
-When tokenize a text, chariot use [`spacy`](https://github.com/explosion/spaCy) mainly. You can specify language by `lang` parameter. But if you want to tokenize Japanese text, you have to prepare the [`Janome`](http://mocobeta.github.io/janome/) or [`MeCab`](http://taku910.github.io/mecab/) since spacy does not support Japanese well.
+When tokenize a text, chariot use [`spaCy`](https://github.com/explosion/spaCy) mainly. You can specify language by `lang` parameter. But if you want to tokenize Japanese text, you have to prepare the [`Janome`](http://mocobeta.github.io/janome/) or [`MeCab`](http://taku910.github.io/mecab/) since spaCy does not support Japanese well.
 
 ### Token preprocessor
 

@@ -14,7 +14,7 @@
   * Multi-language text tokenization is supported by [spaCy](https://spacy.io/).
 * Format Batch
   * Sampling a batch from preprocessed dataset and format it to train the model (padding etc).
-  * You can use pre-trained word vectors through the [chakin](https://github.com/chakki-works/chakin)
+  * You can use pre-trained word vectors through the [chakin](https://github.com/chakki-works/chakin).
 
 **chariot** enables you to concentrate on training your model!
 
@@ -58,7 +58,7 @@ Project root
   └── data
        ├── external     <- Data from third party sources (ex. word vectors).
        ├── interim      <- Intermediate data that has been transformed.
-       ├── processed    <- The final, canonical data sets for modeling.
+       ├── processed    <- The final, canonical datasets for modeling.
        └── raw          <- The original, immutable data dump.
 ```
 

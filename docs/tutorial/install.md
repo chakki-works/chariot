@@ -9,4 +9,4 @@ You can install the `chariot` by pip command.
 pip install chariot
 ```
 
-That'all! [Next, let's preprocess the text](./make_preprocessor.md).
+That's all! [Next, let's preprocess the text](./make_preprocessor.md).
