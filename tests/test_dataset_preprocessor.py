@@ -34,6 +34,11 @@ class TestDatasetPreprocessor(unittest.TestCase):
         for c in formatted:
             self.assertTrue(c in ["label", "feature_1", "feature_3"])
 
+        batch_size = 10
+        for d in dp.iterate(preprocessed, batch_size=batch_size, epoch=1):
+            for k in d:
+                self.assertEqual(len(d[k]), batch_size)
+
     def test_save_load(self):
         data, dp = self._make_dp()
         path = os.path.join(os.path.dirname(__file__), "test_preprocess.tar.gz")
@@ -49,18 +54,13 @@ class TestDatasetPreprocessor(unittest.TestCase):
 
     def _make_dp(self):
         data = {
-            "label": np.random.uniform(size=100),
-            "feature": np.random.uniform(size=100)
+            "label": np.random.uniform(size=100).reshape((-1, 1)),
+            "feature": np.random.uniform(size=100).reshape((-1, 1))
         }
 
-        df = pd.DataFrame.from_dict(data)
-
-        def column(name):
-            return df[name].values.reshape(-1, 1)
-
-        label_scaler = StandardScaler().fit(column("label"))
-        feature_scaler = StandardScaler().fit(column("feature"))
-        feature_scaler_2 = MinMaxScaler().fit(column("feature"))
+        label_scaler = StandardScaler().fit(data["label"])
+        feature_scaler = StandardScaler().fit(data["feature"])
+        feature_scaler_2 = MinMaxScaler().fit(data["feature"])
 
         dp = DatasetPreprocessor()
         dp.process("label").by(label_scaler)
@@ -71,7 +71,7 @@ class TestDatasetPreprocessor(unittest.TestCase):
             .by(feature_scaler).as_name("feature_2")\
             .by(ScalingFormatter()).as_name("feature_3")
 
-        return df, dp
+        return data, dp
 
     def test_feed(self):
         path = os.path.join(os.path.dirname(__file__), "./")

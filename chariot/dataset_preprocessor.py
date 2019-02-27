@@ -120,11 +120,23 @@ class DatasetPreprocessor(BaseDatasetPreprocessor):
         _data = self.preprocess(_data, n_jobs, True, as_dataframe)
         return _data
 
+    def check_length(self, data):
+        length = len(data)
+        if isinstance(data, dict):
+            length = -1
+            for k in data:
+                if length < 0:
+                    length = len(data[k])
+                elif length != len(data[k]):
+                    raise Exception("Length of each data column is mismatch.")
+
+        return length
+
     def iterator(self, data=None, batch_size=32, epoch=-1, n_jobs=1,
                  output_epoch_end=False):
 
         _data = data if data is not None else self._processed
-        data_length = len(_data)
+        data_length = self.check_length(_data)
         steps_per_epoch = data_length // batch_size
 
         def generator():
