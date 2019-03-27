@@ -19,3 +19,8 @@ class TestTextTransformer(unittest.TestCase):
         text = "MY NAME is Joe"
         normalized = tfm.LowerNormalizer().transform([text])[0]
         self.assertEqual(normalized, "my name is joe")
+
+    def test_regular_expression_replacer(self):
+        text = "Telephone number is 123-4567."
+        replaced1 = tfm.RegularExpressionReplacer("\d+", "0").transform([text])[0]
+        self.assertEqual(replaced1, "Telephone number is 0-0.")
