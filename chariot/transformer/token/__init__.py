@@ -1,3 +1,3 @@
-from .stopword_filter import StopwordFilter
+from .stopword_filter import StopwordFilter, FrequencyBasedStopwordFilter
 from .base_form_normalizer import BaseFormNormalizer
 from .number_normalizer import NumberNormalizer

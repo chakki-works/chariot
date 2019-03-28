@@ -12,6 +12,13 @@ class TestTokenTransformer(unittest.TestCase):
         filtered = tfm.StopwordFilter(lang="ja").transform(tokens)
         self.assertTrue(1, len(tokens) - len(filtered))
 
+    def test_freq_based_stopword_ja(self):
+        tokenizer = Tokenizer(lang="ja")
+        text = "わたしの形態素解析は楽しい。わたしはまだまだ。"
+        tokens = tokenizer.transform([text])
+        filterd = tfm.FrequencyBasedStopwordFilter(n=1, min_freq=1).fit_transform(tokens)[0]
+        self.assertTrue(4, len(filterd))
+
     def test_en_tokenize(self):
         tokenizer = Tokenizer(lang="en")
         text = "Tom goes to a park that Mary is playing."
