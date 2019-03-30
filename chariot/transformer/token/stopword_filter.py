@@ -1,43 +1,4 @@
 from chariot.transformer.token.base import TokenFilter
-from chariot.util import apply_map
-from collections import Counter
-
-
-class FrequencyBasedStopwordFilter(TokenFilter):
-
-    def __init__(self, n, min_freq=1, copy=True):
-        super().__init__(copy)
-        self.n = n
-        self.min_freq = min_freq
-        self._stop_words = []
-
-    def token_to_words(self, tokens):
-        words = [t if isinstance(t, str) else t.surface for t in tokens]
-        return [w.strip() for w in words]
-
-    def fit(self, X, y=None):
-        stop_words_counter = Counter()
-        def update_stopwords(element):
-            words = self.token_to_words(element)
-            stop_words_counter.update(words)
-
-        apply_map(X, update_stopwords)
-        common_words = {word for word, freq in stop_words_counter.most_common(self.n)}
-        rare_words = {word for word, freq in stop_words_counter.most_common() if freq <= self.min_freq}
-        stop_words = common_words.union(rare_words)
-        self._stop_words = stop_words
-        return self
-
-    def transform(self, X):
-        if len(self._stop_words) == 0:
-            raise Exception("Stopwords has not made yet. Plase execute fit.")
-        return super().transform(X)
-
-    def apply(self, tokens):
-        if len(tokens) == 0:
-            return tokens
-        else:
-            return [t for t in tokens if t.surface not in self._stop_words]
 
 
 class StopwordFilter(TokenFilter):
