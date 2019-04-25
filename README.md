@@ -1,5 +1,6 @@
 # chariot
 
+[![PyPI version](https://badge.fury.io/py/chariot.svg)](https://badge.fury.io/py/chariot)
 [![Build Status](https://travis-ci.org/chakki-works/chariot.svg?branch=master)](https://travis-ci.org/chakki-works/chariot)
 [![codecov](https://codecov.io/gh/chakki-works/chariot/branch/master/graph/badge.svg)](https://codecov.io/gh/chakki-works/chariot)
 
