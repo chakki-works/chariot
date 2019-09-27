@@ -1,6 +1,7 @@
 language: python
 python:
   - "3.6"
+  - "3.7"
 before_install:
   - python --version
 install:
@@ -11,3 +12,11 @@ script:
   - pytest --cov=chariot tests/
 after_success:
   codecov
+deploy:
+  provider: pypi
+  user: icoxfog417
+  password:
+    secure: aXiZn41Hbnc74ASCTWkVeufzAIBhKMrzY3hdrJDiWubcRE4IGG+xgk3664UmJPssrfN8cwKPt91WgKigDqSUXRFp5o1Zl2eYfNt/bQyo92XiJ8KSh5XuR3/z4QSj8Cwxoll4mWsgSe8fm01W3ZB0M7OJsrCz2VoOykoV3bgP6dr70c7rCUufF/c0s579SfFkRuk2CGGzdT56UQo79OtKEZmuqWEHgEnKNme4qliSqeBBV2upRMfNbvhCx26n6SEhJiYd1eIA7uBcttwmjcS/F53Qs1oXl70my2vBy+6/b16fYo3t02BP0hbOcCREDwWMixdAFMRkORgSvNNkATVPyRcjyaa/LziFabdL9490ajsGsMb57t7BBxC+WyC3gNP+FAwXeZpwrB5YUzQqnGehkp+KN8FuO4ye6uG/c3woyN8B3lAF1FSwwqvPT4isia7lkjZ8tBzXGCRQMXKzqR5aa3u+q+CDNEqN4uon85l9WPAdNmN1qlfySfHV3upTiyqb9lWg4iN1mu0Oo7ccwTKg899rxZ5NiihX3EDqkRuNuM5e/L5sKXv6bM557yvaPtBSxErhiPRFHmSm+iAGqMPp9ftciVHVfJqmmDJr/yaIHhhslY4dGOh+rPRk0nA+Xs23GQm6RZMeFlFNnugi6nhvGF/8psxQFr7V8osp8sxeKgw=
+  on:
+    tags: true
+    python: "3.7"

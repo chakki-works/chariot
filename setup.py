@@ -7,7 +7,8 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name="chariot",
-    version="0.5.2",
+    use_scm_version=True,
+    setup_requires=["setuptools_scm"],
     description="Deliver the ready-to-train data to your NLP model.",
     long_description=readme,
     long_description_content_type="text/markdown",
