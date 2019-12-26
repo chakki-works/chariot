@@ -44,7 +44,7 @@ class TestChakin(unittest.TestCase):
 
     @mock.patch("chakin.download", side_effect=mock_chakin_download)
     def test_download(self, mock_download):
-        path = os.path.join(os.path.dirname(__file__), "./")
+        path = os.path.join(os.path.dirname(__file__), "./data")
         storage = Storage(path)
         storage.chakin(lang="Japanese")
         vec_path = storage.chakin(name="fastText(ja)")
@@ -53,7 +53,7 @@ class TestChakin(unittest.TestCase):
 
     @mock.patch("chakin.download", side_effect=mock_chakin_download_zip)
     def test_download_zip(self, mock_download):
-        path = os.path.join(os.path.dirname(__file__), "./")
+        path = os.path.join(os.path.dirname(__file__), "./data")
         storage = Storage(path)
         vec_path = storage.chakin(name="fastText(ja)")
         print(vec_path)
@@ -62,7 +62,7 @@ class TestChakin(unittest.TestCase):
         shutil.rmtree(vec_path)
 
     def test_word_vector_resource(self):
-        path = os.path.join(os.path.dirname(__file__), "./")
+        path = os.path.join(os.path.dirname(__file__), "./data")
         storage = Storage(path)
 
         vocab = Vocabulary()
@@ -74,7 +74,7 @@ class TestChakin(unittest.TestCase):
             "word " + " ".join(["1"] * vector_size),
             "now " + " ".join(["2"] * vector_size),
         ]
-        word2vec_file = Path(storage.data_path("external/word2vec_dummyr.txt"))
+        word2vec_file = Path(storage.path("external/word2vec_dummyr.txt"))
         with word2vec_file.open(mode="w", encoding="utf-8") as f:
             f.write("\n".join(word2vec))
 

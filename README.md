@@ -37,7 +37,7 @@ from chariot.storage import Storage
 
 
 storage = Storage("your/data/root")
-r = chazutsu.datasets.MovieReview.polarity().download(storage.data_path("raw"))
+r = chazutsu.datasets.MovieReview.polarity().download(storage.path("raw"))
 
 df = storage.chazutsu(r.root).data()
 df.head(5)
@@ -171,6 +171,6 @@ storage.chakin(name="GloVe.6B.50d")
 # Make embedding matrix
 vocab = Vocabulary()
 vocab.set(["you", "loaded", "word", "vector", "now"])
-embed = vocab.make_embedding(storage.data_path("external/glove.6B.50d.txt"))
+embed = vocab.make_embedding(storage.path("external/glove.6B.50d.txt"))
 print(embed.shape)  # (len(vocab.count), 50)
 ```

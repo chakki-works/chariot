@@ -9,7 +9,7 @@ from chariot.preprocessor import Preprocessor
 class TestPreprocessor(unittest.TestCase):
 
     def test_dataframe(self):
-        path = os.path.join(os.path.dirname(__file__), "./")
+        path = os.path.join(os.path.dirname(__file__), "./data")
         storage = Storage(path)
         df = storage.read("raw/corpus.csv", delimiter="\t",
                           names=["summary", "text"])
@@ -34,7 +34,7 @@ class TestPreprocessor(unittest.TestCase):
         os.remove("test_preprocessor.pkl")
 
     def test_series(self):
-        path = os.path.join(os.path.dirname(__file__), "./")
+        path = os.path.join(os.path.dirname(__file__), "./data")
         storage = Storage(path)
         df = storage.read("raw/corpus_multi.csv", delimiter="\t",
                           names=["label", "review", "comment"])

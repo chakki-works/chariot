@@ -74,7 +74,7 @@ class TestDatasetPreprocessor(unittest.TestCase):
         return data, dp
 
     def test_feed(self):
-        path = os.path.join(os.path.dirname(__file__), "./")
+        path = os.path.join(os.path.dirname(__file__), "./data")
         storage = Storage(path)
         df = storage.read("raw/corpus_multi.csv", delimiter="\t",
                           names=["label", "review", "comment"])

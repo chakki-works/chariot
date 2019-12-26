@@ -54,3 +54,28 @@ def apply_map(data, func, inplace=False):
         return func(data)
 
     return data
+
+
+def get_xtqdm():
+    from tqdm import tqdm
+    from tqdm import tqdm_notebook
+
+    def is_jupyter():
+        try:
+            shell = get_ipython().__class__.__name__
+            if shell == "ZMQInteractiveShell":
+                return True
+            elif shell == "TerminalInteractiveShell":
+                return False
+            else:
+                return False
+        except NameError:
+            return False
+
+    if is_jupyter():
+        return tqdm_notebook
+    else:
+        return tqdm
+
+
+xtqdm = get_xtqdm()

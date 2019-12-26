@@ -1,6 +1,6 @@
 import os
 import mmap
-from tqdm import tqdm
+from chariot.util import xtqdm
 
 
 class DataFile():
@@ -68,7 +68,7 @@ class DataFile():
         with open(self.path, encoding=self.encoding) as f:
             iterator = f
             if progress:
-                iterator = tqdm(f, total=total_count)
+                iterator = xtqdm(f, total=total_count)
             for line in iterator:
                 yield line.strip()
 

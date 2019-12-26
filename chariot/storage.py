@@ -1,10 +1,13 @@
 import os
+from urllib.parse import urlparse
 from pathlib import Path
 import shutil
 import re
 from zipfile import ZipFile
 import gzip
+import requests
 import pandas as pd
+from chariot.util import xtqdm
 
 
 class Storage():
@@ -38,15 +41,27 @@ class Storage():
         for _dir in ["raw", "external", "interim", "processed"]:
             data_root.joinpath(_dir).mkdir(exist_ok=True)
 
-        storage = cls(path)
+        storage = cls(data_root)
         return storage
 
-    def data_path(self, target=""):
-        return os.path.join(self.root, "data/{}".format(target))
+    def raw(self, target=""):
+        return self.path("raw/{}".format(target) if target else "raw")
+
+    def interim(self, target=""):
+        return self.path("interim/{}".format(target) if target else "interim")
+
+    def external(self, target=""):
+        return self.path("external/{}".format(target) if target else "external")
+
+    def processed(self, target=""):
+        return self.path("processed/{}".format(target) if target else "processed")
+
+    def path(self, target=""):
+        return os.path.join(self.root, target)
 
     def read(self, target, encoding="utf-8", delimiter=",",
              header="infer", names=None):
-        path = self.data_path(target)
+        path = self.path(target)
         if names is not None:
             df = pd.read_csv(path, delimiter=delimiter, header=None,
                              names=names)
@@ -66,7 +81,7 @@ class Storage():
         if lang:
             chakin.search(lang)
         elif number > -1 or name:
-            path = self.data_path("external")
+            path = self.path("external")
             if not os.path.exists(path):
                 os.mkdir(path)
 
@@ -107,6 +122,40 @@ class Storage():
         _name = re.sub("([a-z0-9])([A-Z])", r"\1_\2", _name).lower()
         return _name
     """
+
+    def _get_file_name(self, resp):
+        file_name = ""
+        if resp and "content-disposition" in resp.headers:
+            cd = resp.headers["content-disposition"]
+            file_matches = re.search("filename=(.+)", cd)
+            if file_matches:
+                file_name = file_matches.group(0)
+                file_name = file_name.split("=")[1]
+        else:
+            parsed = urlparse(self.download_url)
+            file_name = os.path.basename(parsed.path)
+
+        return file_name
+
+    def download(self, url, path):
+        r = requests.get(url, stream=True)
+        _path = self.path(path)
+        if not r.ok:
+            r.raise_for_status()
+        else:
+            total_size = int(r.headers.get("content-length", 0))
+            if os.path.isdir(_path):
+                file_name = self._get_file_name(r)
+                _path = os.path.join(_path, file_name)
+
+            with open(_path, "wb") as f:
+                chunk_size = 1024
+                limit = total_size / chunk_size
+                for data in xtqdm(r.iter_content(chunk_size=chunk_size),
+                                  total=limit, unit="B", unit_scale=True):
+                    f.write(data)
+
+        return _path
 
     def expand(self, path, ext):
         location = Path(os.path.dirname(path))

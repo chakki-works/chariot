@@ -10,9 +10,9 @@ from chariot.storage import Storage
 class TestChazutsu(unittest.TestCase):
 
     def test_chazutsu(self):
-        path = os.path.join(os.path.dirname(__file__), "../")
+        path = os.path.join(os.path.dirname(__file__), "../data")
         storage = Storage(path)
-        r = chazutsu.datasets.DUC2004().download(storage.data_path("raw"))
+        r = chazutsu.datasets.DUC2004().download(storage.path("raw"))
         df = storage.chazutsu(r.root).data()
         print(df.head(5))
         shutil.rmtree(r.root)

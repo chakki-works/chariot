@@ -12,7 +12,7 @@ import chazutsu
 from chariot.storage import Storage
 
 storage = Storage.setup_data_dir(ROOT_DIR)
-r = chazutsu.datasets.MovieReview.polarity().download(storage.data_path("raw"))
+r = chazutsu.datasets.MovieReview.polarity().download(storage.path("raw"))
 r.train_data().head(3)
 ```
 
@@ -28,9 +28,9 @@ r.train_data().head(3)
 `chariot` can load the pretrained word vector by collaborating with [`chakin`](https://github.com/chakki-works/chakin).
 
 ```py
-storage = Storage("path/to/project/root")
+storage = Storage("path/to/project/root/data")
 vec_path = storage.chakin(name="GloVe.6B.200d")  # download word vector
 
 vocab = Vocabulary.from_file("path/to/vocabulary")
-embedding = vocab.make_embedding(storage.data_path("external/glove.6B.200d.txt"))
+embedding = vocab.make_embedding(storage.path("external/glove.6B.200d.txt"))
 ```
