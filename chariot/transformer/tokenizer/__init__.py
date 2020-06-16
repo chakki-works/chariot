@@ -11,7 +11,7 @@ class Tokenizer(BasePreprocessor):
     def __init__(self, lang="en", copy=True):
         super().__init__(copy)
         self.lang = lang
-        self._tokenizer = None
+        self.tokenizer = None
         self.set_tokenizer()
 
     def set_tokenizer(self):
