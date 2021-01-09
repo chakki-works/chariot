@@ -1,7 +1,7 @@
 import re
 import copy
 import numpy as np
-from sklearn.externals import joblib
+import joblib
 from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.base import BaseEstimator, TransformerMixin
 from chariot.transformer.text.base import TextNormalizer, TextFilter
